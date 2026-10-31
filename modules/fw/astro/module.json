@@ -1,0 +1,6 @@
+{
+  "id": "fw:astro",
+  "layer": "fw",
+  "description": "Astro framework rules: inherits lang:ts, astro check, island hydration boundaries, and accessibility",
+  "depends_on": ["core", "lang:ts"]
+}

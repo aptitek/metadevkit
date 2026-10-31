@@ -1,0 +1,19 @@
+# =============================================================================
+# detekt-server-boundary.yml — Server-Side Detekt Boundary Overlay
+# Prevents server/common modules from importing client-side Minecraft/Loader classes
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+style:
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'net.minecraft.client.*'
+        reason: 'Server/common modules must never import client-side Minecraft classes.'
+      - value: 'com.mojang.blaze3d.*'
+        reason: 'Server/common modules must never import Blaze3D rendering classes.'
+      - value: 'org.quiltmc.qsl.base.api.entrypoint.client.*'
+        reason: 'Server/common modules must not use Quilt client-side entrypoints.'
+      - value: 'net.fabricmc.api.ClientModInitializer'
+        reason: 'Server/common modules must not use Fabric ClientModInitializer.'
+      - value: 'net.fabricmc.fabric.api.client.*'
+        reason: 'Server/common modules must not use Fabric Client APIs.'

@@ -1,0 +1,3 @@
+# --- Module: addon:cloudflare ---
+cloudflared = "latest"
+"npm:wrangler" = "latest"

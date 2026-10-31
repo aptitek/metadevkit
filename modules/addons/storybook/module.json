@@ -1,0 +1,6 @@
+{
+  "id": "addon:storybook",
+  "layer": "addon",
+  "depends_on": ["core", "lang:ts", "fw:react"],
+  "description": "Storybook CSF3 Fortress: 100% .stories.tsx coverage for React components, strict CSF3 object notation (bans storiesOf/Template.bind/function stories)"
+}

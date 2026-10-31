@@ -1,0 +1,52 @@
+# =============================================================================
+# polyglot-guardrails — Java 21 Static AST Rules (lang:java)
+# Enforces Clean Code Java, Effective Java, and zero debug/wildcard leaks
+# =============================================================================
+rules:
+  - id: java-no-system-out-or-err
+    languages: [java]
+    severity: ERROR
+    message: >-
+      [Java Hygiene] Direct 'System.out' or 'System.err' calls are forbidden.
+      Use SLF4J Logger (LoggerFactory.getLogger / LogUtils.getLogger) instead.
+    paths:
+      exclude:
+        - "**/src/test/**"
+    patterns:
+      - pattern-either:
+          - pattern: System.out.println(...)
+          - pattern: System.out.print(...)
+          - pattern: System.out.printf(...)
+          - pattern: System.err.println(...)
+          - pattern: System.err.print(...)
+
+  - id: java-no-print-stack-trace
+    languages: [java]
+    severity: ERROR
+    message: >-
+      [Java Hygiene] 'printStackTrace()' is forbidden. Log exceptions with
+      structured context via LOGGER.error("message", exception).
+    pattern: $EX.printStackTrace(...)
+
+  - id: java-no-wildcard-import
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Java Style] Wildcard imports ('import ...*;') are forbidden. Import
+      explicit symbols to prevent namespace collisions.
+    paths:
+      include:
+        - "**/*.java"
+    pattern-regex: '^\s*import\s+(static\s+)?[a-zA-Z0-9_.]+\.\*\s*;'
+
+  - id: java-no-raw-optional-get
+    languages: [java]
+    severity: ERROR
+    message: >-
+      [Java Total Functions] Calling '.get()' on Optional without explicit
+      combinators is forbidden. Use '.orElse(...)', '.orElseGet(...)',
+      '.orElseThrow(...)', or '.map(...)'.
+    paths:
+      exclude:
+        - "**/src/test/**"
+    pattern: $OPT.get()

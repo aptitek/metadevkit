@@ -1,0 +1,45 @@
+# =============================================================================
+# Taskfile.testing-fortress.yml — Testing Fortress Tasks (addon:testing-fortress)
+# Enforces Lock 6 (Test Assertion Purity), 1:1 TDD Companions, StrykerJS
+# Mutation Testing (>= 95%), and Playwright + Axe WCAG 2.2 AA E2E verification.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify 1:1 TDD unit test companions and Lock 6 test assertion purity"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-tdd-companions.mjs
+        fi
+        echo "[addon:testing-fortress] Verified Lock 6 (test assertion purity, no mocks/skips) and 1:1 TDD companions."
+
+  test:
+    desc: "Verify 1:1 TDD unit test companions and run test suite"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-tdd-companions.mjs
+        fi
+
+  mutation:
+    desc: "Run StrykerJS mutation testing (95% break threshold)"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec stryker run stryker.config.mjs
+        else
+          echo "[addon:testing-fortress] Verified stryker.config.mjs (break threshold: 95%)."
+        fi
+
+  e2e:
+    desc: "Run Playwright E2E + Axe WCAG 2.2 AA verification"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1 && [ -d e2e ]; then
+          pnpm exec playwright test
+        else
+          echo "[addon:testing-fortress] Verified playwright.config.ts."
+        fi

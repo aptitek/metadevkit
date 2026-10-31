@@ -1,0 +1,27 @@
+# =============================================================================
+# Taskfile.nicegui.yml — NiceGUI Reactive Python UI Tasks (fw:nicegui)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Start NiceGUI server in development mode via uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          uv run python -m app.main
+        fi
+
+  lint:
+    desc: "Validate NiceGUI non-blocking async event-loop and Atomic UI boundaries"
+    cmds:
+      - bash .guardrails/scripts/validate-nicegui.sh .
+
+  test:
+    desc: "Run NiceGUI User/Screen tests via uv and pytest"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
+          uv run pytest
+        fi

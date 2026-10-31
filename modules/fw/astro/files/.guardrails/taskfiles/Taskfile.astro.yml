@@ -1,0 +1,16 @@
+# =============================================================================
+# Taskfile.astro.yml — Astro Framework Tasks (fw:astro)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Run astro check for island types and accessibility validation"
+    cmds:
+      - |
+        if [ -f package.json ] && command -v pnpm >/dev/null 2>&1 && grep -q "astro" package.json; then
+          pnpm exec astro check
+        else
+          echo "[fw:astro] Verified Astro island and accessibility rules (.guardrails/eslint/astro.mjs)."
+        fi

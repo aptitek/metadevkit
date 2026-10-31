@@ -1,0 +1,6 @@
+{
+  "id": "lang:php",
+  "layer": "lang",
+  "description": "PHP stack with Composer, Laravel Pint formatting, PHPStan level max, and Pest testing",
+  "depends_on": ["core"]
+}

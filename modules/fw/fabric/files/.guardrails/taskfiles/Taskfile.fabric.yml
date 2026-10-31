@@ -1,0 +1,30 @@
+# =============================================================================
+# Taskfile.fabric.yml — Fabric MC Modding Tasks (fw:fabric)
+# Tools: Fabric Loom (fabric-loom), fabric.mod.json validator
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Validate fabric.mod.json schema, entrypoints, mixin configs, and Fabric side boundaries"
+    cmds:
+      - bash ./.guardrails/scripts/validate-fabric-mod.sh "."
+
+  build:
+    desc: "Build and remap Fabric mod JARs (remapJar)"
+    cmds:
+      - bash ./.guardrails/scripts/validate-fabric-mod.sh "."
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew build --console=plain
+        fi
+
+  test:
+    desc: "Verify Fabric mod metadata and run test suite"
+    cmds:
+      - bash ./.guardrails/scripts/validate-fabric-mod.sh "."
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          ./gradlew test --console=plain
+        fi

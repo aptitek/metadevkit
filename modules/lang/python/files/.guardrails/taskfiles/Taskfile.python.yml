@@ -1,0 +1,57 @@
+# =============================================================================
+# Taskfile.python.yml — Python Module Tasks (lang:python)
+# Tools: uv, ruff, mypy, radon, vulture, pytest
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Synchronize Python environment using uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          uv sync
+        fi
+
+  format:
+    desc: "Format Python files with ruff"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
+          uv run ruff format {{.STAGED_FILES | default "."}}
+        elif command -v ruff >/dev/null 2>&1; then
+          ruff format {{.STAGED_FILES | default "."}}
+        fi
+
+  lint:
+    desc: "Lint Python code (validate-python.sh + ruff + mypy + radon + vulture)"
+    cmds:
+      - bash .guardrails/scripts/validate-python.sh .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
+          uv run ruff check {{.STAGED_FILES | default "."}}
+        elif command -v ruff >/dev/null 2>&1; then
+          ruff check {{.STAGED_FILES | default "."}}
+        fi
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run mypy --version >/dev/null 2>&1; then
+          uv run mypy .
+        elif command -v mypy >/dev/null 2>&1 && [ -d src ]; then
+          mypy src
+        fi
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run radon --version >/dev/null 2>&1; then
+          uv run radon cc . -a -s
+        fi
+        if command -v vulture >/dev/null 2>&1; then
+          vulture . --min-confidence 80
+        fi
+
+  test:
+    desc: "Run pytest suite via uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
+          uv run pytest
+        elif command -v pytest >/dev/null 2>&1 && [ -d tests ]; then
+          pytest
+        fi

@@ -1,0 +1,6 @@
+{
+  "id": "fw:nicegui",
+  "layer": "fw",
+  "description": "NiceGUI reactive Python UI framework (FastAPI + Vue/Quasar) with uv, non-blocking async event loop gates, Atomic UI structure, and nicegui.testing.User verification",
+  "depends_on": ["core", "lang:python"]
+}

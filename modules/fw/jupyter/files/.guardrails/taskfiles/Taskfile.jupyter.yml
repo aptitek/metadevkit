@@ -1,0 +1,45 @@
+# =============================================================================
+# Taskfile.jupyter.yml — Jupyter Notebook Tasks (fw:jupyter)
+# Tools: uv, jq, ruff (native .ipynb support), pytest --nbmake
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Launch Jupyter Lab environment via uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          uv run jupyter lab
+        fi
+
+  format:
+    desc: "Strip .ipynb cell outputs and format notebooks with Ruff"
+    cmds:
+      - bash .guardrails/scripts/validate-jupyter.sh --strip .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
+          uv run ruff format {{.STAGED_FILES | default "."}}
+        elif command -v ruff >/dev/null 2>&1; then
+          ruff format {{.STAGED_FILES | default "."}}
+        fi
+
+  lint:
+    desc: "Validate .ipynb clean outputs, reproducibility, cell modularity, and Ruff rules"
+    cmds:
+      - bash .guardrails/scripts/validate-jupyter.sh .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
+          uv run ruff check {{.STAGED_FILES | default "."}}
+        elif command -v ruff >/dev/null 2>&1; then
+          ruff check {{.STAGED_FILES | default "."}}
+        fi
+
+  test:
+    desc: "Execute and test Jupyter notebooks end-to-end with pytest --nbmake"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --help 2>/dev/null | grep -q "nbmake"; then
+          uv run pytest --nbmake notebooks/
+        fi

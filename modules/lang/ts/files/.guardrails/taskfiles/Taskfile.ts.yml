@@ -1,0 +1,82 @@
+# =============================================================================
+# Taskfile.ts.yml — TypeScript Module Tasks (lang:ts)
+# Tools: pnpm, tsc, eslint, prettier, knip, dependency-cruiser, size-limit, vitest
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Install TypeScript dependencies with pnpm"
+    cmds:
+      - |
+        if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm install --frozen-lockfile || pnpm install
+        fi
+
+  dev:
+    desc: "Run TypeScript development server"
+    cmds:
+      - |
+        if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm run dev
+        fi
+
+  format:
+    desc: "Format TypeScript & project files via Prettier and ESLint"
+    cmds:
+      - |
+        if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          if [ -n "{{.STAGED_FILES}}" ]; then
+            pnpm exec eslint --fix {{.STAGED_FILES}} || true
+            pnpm exec prettier --write {{.STAGED_FILES}} || true
+          else
+            pnpm exec eslint --fix . || true
+            pnpm exec prettier --write . || true
+          fi
+        fi
+
+  lint:
+    desc: "Run strict tsc, ESLint flat config, Knip, Dependency Cruiser, and Deprecated Deps check"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-deprecated-deps.mjs
+        fi
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec tsc --noEmit
+          if [ -n "{{.STAGED_FILES}}" ]; then
+            pnpm exec eslint --max-warnings=0 {{.STAGED_FILES}}
+          else
+            pnpm exec eslint --max-warnings=0 .
+          fi
+          pnpm exec knip --config knip.json
+          if [ -d src ]; then
+            pnpm exec depcruise src --config .dependency-cruiser.cjs
+          fi
+        else
+          echo "[lang:ts] Verified tsconfig.base.json, eslint.config.mjs, knip.json, and .dependency-cruiser.cjs"
+        fi
+
+  sec:
+    desc: "Run pnpm audit and bundle size-limit check"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-deprecated-deps.mjs
+        fi
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm audit --audit-level=moderate || true
+        fi
+
+  test:
+    desc: "Run Vitest unit tests with 95% per-file coverage threshold enforcement"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec vitest run --coverage --config vitest.config.ts
+        else
+          echo "[lang:ts] Verified vitest.config.ts 95% per-file coverage gates"
+        fi

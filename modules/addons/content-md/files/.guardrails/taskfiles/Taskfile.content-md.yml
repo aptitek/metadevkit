@@ -1,0 +1,17 @@
+# =============================================================================
+# Taskfile.content-md.yml — Content & Markdown/MDX Purity Tasks (addon:content-md)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify Markdown structural integrity, zero-styling MDX purity, and course frontmatter"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-markdown-structure.mjs
+          node ./.guardrails/scripts/lint-mdx-purity.mjs
+          node ./.guardrails/scripts/lint-courses-simulations.mjs
+        fi
+        echo "[addon:content-md] Verified Markdown structure, MDX purity, and content registries."

@@ -1,0 +1,6 @@
+{
+  "id": "addon:design-system",
+  "layer": "addon",
+  "description": "Material Design 3 + Panda CSS + CSS Token Fortress: Lock 3 (algebraic MD3 color pairing, motion/shape/typography tokens), Lock 5 (commutative Panda recipe deduplication, max 3 inline style props), and CSS native preservation",
+  "depends_on": ["core", "lang:ts"]
+}

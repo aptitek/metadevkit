@@ -1,0 +1,66 @@
+# =============================================================================
+# Taskfile.java.yml — Java 21 Module Tasks (lang:java)
+# Tools: gradle, spotless, checkstyle, pmd, junit5, jacoco
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Verify Java 21 toolchain and Gradle wrapper"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          chmod +x ./gradlew
+          ./gradlew --version >/dev/null
+        fi
+
+  format:
+    desc: "Format Java sources using Spotless"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "spotlessApply"; then
+            ./gradlew spotlessApply --console=plain
+          fi
+        fi
+
+  lint:
+    desc: "Check Java formatting, Checkstyle, PMD, and AST hygiene rules"
+    cmds:
+      - |
+        if [ -d src ]; then
+          if grep -RInE --include="*.java" '^\s*import\s+(static\s+)?[a-zA-Z0-9_.]+\.\*\s*;' src/ ; then
+            echo "[JAVA LINT ERROR] Wildcard imports ('import ...*;') are forbidden in Java sources." >&2
+            exit 1
+          fi
+        fi
+        if [ -d src/main ]; then
+          if grep -RInE --include="*.java" '(System\.(out|err)\.print|\.printStackTrace\s*\()' src/main/ ; then
+            echo "[JAVA LINT ERROR] System.out/err and printStackTrace() are forbidden in src/main/. Use SLF4J Logger." >&2
+            exit 1
+          fi
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          TASKS_LIST="$(./gradlew tasks --all 2>/dev/null || true)"
+          if echo "$TASKS_LIST" | grep -q "spotlessCheck"; then
+            ./gradlew spotlessCheck --console=plain
+          fi
+          if echo "$TASKS_LIST" | grep -q "checkstyleMain"; then
+            ./gradlew checkstyleMain --console=plain
+          fi
+          if echo "$TASKS_LIST" | grep -q "pmdMain"; then
+            ./gradlew pmdMain --console=plain
+          fi
+        fi
+
+  test:
+    desc: "Run JUnit 5 tests and JaCoCo coverage report"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          ./gradlew test --console=plain
+          if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestReport"; then
+            ./gradlew jacocoTestReport --console=plain
+          fi
+        fi

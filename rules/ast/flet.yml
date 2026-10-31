@@ -1,0 +1,53 @@
+# =============================================================================
+# flet.yml — Semgrep AST Rules for Flet Material Design 3 Projects (fw:flet)
+# Enforces Geranium & Modern Flet (0.27+/0.80+) Quality Gates:
+#   - Zero deprecated ft.UserControl (subclass ft.Container/ft.Column/ft.Row)
+#   - Zero deprecated lowercase ft.colors / ft.icons (use ft.Colors / ft.Icons Enums)
+#   - Zero direct AI/LLM SDK imports inside ui/ modules
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: guardrails-flet-no-deprecated-usercontrol
+    patterns:
+      - pattern-either:
+          - pattern: |
+              class $CLS(ft.UserControl):
+                  ...
+          - pattern: |
+              class $CLS(UserControl):
+                  ...
+    message: >
+      [GUARDRAILS AST] ft.UserControl is deprecated and removed in modern Flet. Subclass
+      standard layout controls directly (ft.Container, ft.Row, ft.Column) and call super().__init__().
+    languages: [python]
+    severity: ERROR
+
+  - id: guardrails-flet-no-deprecated-lowercase-enums
+    patterns:
+      - pattern-either:
+          - pattern: ft.colors.$COLOR
+          - pattern: ft.icons.$ICON
+    message: >
+      [GUARDRAILS AST] Lowercase ft.colors and ft.icons are deprecated. Use PascalCase
+      enums ft.Colors.* and ft.Icons.*.
+    languages: [python]
+    severity: ERROR
+
+  - id: guardrails-flet-no-direct-ai-sdk-in-ui
+    patterns:
+      - pattern-either:
+          - pattern: import langchain
+          - pattern: from langchain import ...
+          - pattern: from langchain_google_genai import ...
+          - pattern: import langgraph
+          - pattern: from langgraph import ...
+          - pattern: from google.cloud import texttospeech
+    paths:
+      include:
+        - "**/ui/**/*.py"
+    message: >
+      [GUARDRAILS AST] Flet UI components (ui/**) must NEVER import LangChain, LangGraph, or
+      Google Cloud TTS SDKs directly. Delegate business and AI orchestration to a dedicated
+      service/agent layer and pass callbacks into UI components.
+    languages: [python]
+    severity: ERROR

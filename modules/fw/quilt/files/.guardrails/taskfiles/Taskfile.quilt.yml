@@ -1,0 +1,30 @@
+# =============================================================================
+# Taskfile.quilt.yml — Quilt MC Modding Tasks (fw:quilt)
+# Tools: Quilt Loom (org.quiltmc.loom), quilt.mod.json validator
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Validate quilt.mod.json schema, entrypoints, mixin configs, and Quilt side boundaries"
+    cmds:
+      - bash ./.guardrails/scripts/validate-quilt-mod.sh "."
+
+  build:
+    desc: "Build and remap Quilt mod JARs (remapJar)"
+    cmds:
+      - bash ./.guardrails/scripts/validate-quilt-mod.sh "."
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew build --console=plain
+        fi
+
+  test:
+    desc: "Verify Quilt mod metadata and run test suite"
+    cmds:
+      - bash ./.guardrails/scripts/validate-quilt-mod.sh "."
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          ./gradlew test --console=plain
+        fi

@@ -1,0 +1,6 @@
+{
+  "id": "fw:fabric",
+  "layer": "fw",
+  "description": "Fabric MC (1.21+) modding framework with Fabric Loom (fabric-loom), fabric.mod.json schema & entrypoint verification, Fabric API, fabric-language-kotlin, and Fabric GameTest API",
+  "depends_on": ["core", "lang:java", "fw:minecraft"]
+}

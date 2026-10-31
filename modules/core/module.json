@@ -1,0 +1,6 @@
+{
+  "id": "core",
+  "layer": "core",
+  "description": "Universal mandatory base: mise, Taskfile contract, lefthook, jscpd, lizard, trivy, semgrep, AI guardrails",
+  "depends_on": []
+}

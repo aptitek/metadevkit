@@ -1,0 +1,6 @@
+{
+  "id": "addon:content-md",
+  "layer": "addon",
+  "depends_on": ["core", "lang:ts"],
+  "description": "Content & Markdown/MDX Purity Fortress: Remark lint, raw HTML ban, balanced fenced divs/code blocks, zero-styling MDX purity, i18n locale parity, and course/simulation registry validation"
+}

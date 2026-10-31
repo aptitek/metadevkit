@@ -1,0 +1,19 @@
+# =============================================================================
+# Taskfile.react-router.yml — React Router Framework Tasks (fw:react-router)
+# Enforces route parsimony, nested <Outlet /> hierarchy, and loader/action rules.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Validate React Router route parsimony, nested hierarchy, and loader/action separation"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1 && grep -q "react-router" package.json; then
+          pnpm exec react-router typegen || true
+        fi
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-routes.mjs
+        fi
+        echo "[fw:react-router] Verified route parsimony (max 2 top-level layouts, max 12 routes) and loader/action boundaries."

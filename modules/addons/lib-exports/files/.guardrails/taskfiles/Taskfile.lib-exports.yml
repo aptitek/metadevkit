@@ -1,0 +1,15 @@
+# =============================================================================
+# Taskfile.lib-exports.yml — Library Barrel Exports Tasks (addon:lib-exports)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify explicit named barrel exports in src/index.ts and package.json exports map"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-exports.mjs
+        fi
+        echo "[addon:lib-exports] Verified explicit barrel export contract."

@@ -1,0 +1,53 @@
+# =============================================================================
+# Taskfile.minecraft.yml — Minecraft 1.21+ Modding Tasks (fw:minecraft)
+# Tools: Loom (runClient, runServer, runGameTestServer, runData), Mixin & Asset Gates
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Launch Minecraft client in development environment (runClient)"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew runClient --console=plain
+        fi
+
+  server:
+    desc: "Launch dedicated Minecraft server in development environment (runServer)"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew runServer --console=plain
+        fi
+
+  gametest:
+    desc: "Run headless Mojang GameTest server suite (runGameTestServer)"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew runGameTestServer --console=plain
+        fi
+
+  datagen:
+    desc: "Run Minecraft Data Generation providers (runData)"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          ./gradlew runData --console=plain
+        fi
+
+  lint:
+    desc: "Validate Minecraft Client/Server side separation, Mixin safety, and 1.21+ assets/datapacks"
+    cmds:
+      - bash ./.guardrails/scripts/validate-minecraft-mod.sh "."
+
+  test:
+    desc: "Run Minecraft mod unit tests and validate GameTest layout"
+    cmds:
+      - bash ./.guardrails/scripts/validate-minecraft-mod.sh "."
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          ./gradlew test --console=plain
+        fi

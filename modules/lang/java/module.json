@@ -1,0 +1,6 @@
+{
+  "id": "lang:java",
+  "layer": "lang",
+  "description": "Java stack with Gradle, Spotless formatting, PMD static analysis, and JaCoCo coverage",
+  "depends_on": ["core"]
+}

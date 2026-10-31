@@ -1,0 +1,8 @@
+# --- Module: core ---
+go-task = "latest"
+lefthook = "latest"
+"npm:jscpd" = "latest"
+"pipx:lizard" = "latest"
+trivy = "latest"
+"pipx:semgrep" = "latest"
+"pipx:copier" = "latest"

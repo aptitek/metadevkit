@@ -1,0 +1,6 @@
+{
+  "id": "fw:jupyter",
+  "layer": "fw",
+  "description": "Reproducible Jupyter Lab / Notebook stack with uv, automatic .ipynb output stripping, Ruff native notebook lint/format, cell modularity gates, and pytest --nbmake",
+  "depends_on": ["core", "lang:python"]
+}

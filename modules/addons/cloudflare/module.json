@@ -1,0 +1,6 @@
+{
+  "id": "addon:cloudflare",
+  "layer": "addon",
+  "description": "Cloudflare Workers/Pages/D1/R2 addon: wrangler, cloudflared, type generation, wrangler.toml validation, AST security rules",
+  "depends_on": ["core"]
+}

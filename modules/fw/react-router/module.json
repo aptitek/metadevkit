@@ -1,0 +1,6 @@
+{
+  "id": "fw:react-router",
+  "layer": "fw",
+  "description": "React Router v7 framework rules: inherits fw:react, route validation, strict separation of loaders and actions",
+  "depends_on": ["core", "lang:ts", "fw:react"]
+}

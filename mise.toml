@@ -1,0 +1,14 @@
+# =============================================================================
+# polyglot-guardrails — Root Toolchain Configuration (mise)
+# =============================================================================
+[tools]
+go-task = "latest"
+lefthook = "latest"
+"npm:jscpd" = "latest"
+"pipx:lizard" = "latest"
+trivy = "latest"
+"pipx:semgrep" = "latest"
+"pipx:copier" = "latest"
+node = "lts"
+pnpm = "latest"
+jq = "latest"

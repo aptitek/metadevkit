@@ -1,0 +1,101 @@
+# =============================================================================
+# polyglot-guardrails — Copier Template Configuration
+# Single Source of Truth for initializing & converting polyglot repositories
+# =============================================================================
+_min_copier_version: "9.0.0"
+_subdirectory: "."
+_exclude:
+  - ".git"
+  - "copier.yml"
+  - "README.md"
+  - "modules"
+  - "rules"
+  - "scripts"
+  - "Taskfile.yml"
+
+project_name:
+  type: str
+  help: "Project name (kebab-case)"
+  default: "my-polyglot-app"
+
+primary_language:
+  type: str
+  help: "Primary language module (lang:<langage>)"
+  choices:
+    "TypeScript (pnpm, strict TS, Lock 1 functional purity, ESLint Flat, Knip, DepCruiser, Vitest 95%)": "lang:ts"
+    "Kotlin 2.x (Gradle Kotlin DSL, Detekt maxIssues:0, Kotest, Coroutines, JaCoCo)": "lang:kotlin"
+    "Java 21 (Gradle, Spotless, Checkstyle, PMD, JUnit 5, JaCoCo)": "lang:java"
+    "Python 3.12+ (uv, Ruff McCabe <= 8, max 256 lines/file, MyPy strict, Radon, Pytest)": "lang:python"
+    "PHP (composer, pint, phpstan, pest)": "lang:php"
+  default: "lang:ts"
+
+framework:
+  type: str
+  help: "Framework sub-module (fw:<framework>)"
+  when: "{{ primary_language in ['lang:ts', 'lang:kotlin', 'lang:java', 'lang:python'] }}"
+  choices:
+    "None (Pure language module)": "none"
+    "React (Lock 2 i18n, Lock 4 Atomic Purity, WCAG 2.2 AA a11y, max 150 lines)": "fw:react"
+    "React Router (inherits fw:react + route parsimony, loaders/actions)": "fw:react-router"
+    "Astro (astro check, island architecture & a11y rules)": "fw:astro"
+    "Minecraft Base (fw:minecraft — Side separation, Mixin safety, GameTest, 1.21+ assets)": "fw:minecraft"
+    "Quilt MC (fw:quilt — inherits fw:minecraft + Quilt Loom, quilt.mod.json, QKL)": "fw:quilt"
+    "Fabric MC (fw:fabric — inherits fw:minecraft + Fabric Loom, fabric.mod.json, Fabric API)": "fw:fabric"
+    "Flet MD3 (fw:flet — Flutter for Python, Material Design 3 tokens, 5-level Atomic Design)": "fw:flet"
+    "NiceGUI (fw:nicegui — Reactive FastAPI/Vue Python UI, non-blocking async gates, User testing)": "fw:nicegui"
+    "LangChain / LangGraph (fw:langchain — LCEL, LangGraph StateGraph, Gemini, MCP, SecretStr)": "fw:langchain"
+    "Jupyter Lab / Notebook (fw:jupyter — uv reproducible notebooks, output stripping, nbmake)": "fw:jupyter"
+  default: "fw:react"
+
+addon_design_system:
+  type: bool
+  help: "Enable addon:design-system (Lock 3 M3 Token Purity + Lock 5 Panda CSS Recipes & Deduplication)?"
+  when: "{{ primary_language == 'lang:ts' }}"
+  default: true
+
+addon_testing_fortress:
+  type: bool
+  help: "Enable addon:testing-fortress (Lock 6 Test Assertion Purity, 1:1 TDD companions, StrykerJS 95%, Playwright + Axe)?"
+  when: "{{ primary_language == 'lang:ts' }}"
+  default: true
+
+addon_storybook:
+  type: bool
+  help: "Enable addon:storybook (100% CSF3 .stories.tsx coverage & CSF3 AST enforcement)?"
+  when: "{{ framework in ['fw:react', 'fw:react-router'] }}"
+  default: true
+
+addon_content_md:
+  type: bool
+  help: "Enable addon:content-md (Markdown structural purity, zero-styling MDX, course/simulation registries)?"
+  when: "{{ primary_language == 'lang:ts' }}"
+  default: false
+
+addon_cloudflare:
+  type: bool
+  help: "Enable addon:cloudflare (Wrangler, cloudflared, D1/R2/Workers AST rules)?"
+  default: false
+
+addon_drizzle_d1:
+  type: bool
+  help: "Enable addon:drizzle-d1 (Drizzle ORM + Cloudflare D1 SQLite migrations)?"
+  when: "{{ addon_cloudflare and primary_language == 'lang:ts' }}"
+  default: false
+
+addon_lib_exports:
+  type: bool
+  help: "Enable addon:lib-exports (Explicit named barrel exports in src/index.ts & package.json exports check)?"
+  when: "{{ primary_language == 'lang:ts' }}"
+  default: false
+
+master_source:
+  type: str
+  help: "Master polyglot-guardrails source URL or local filesystem path"
+  default: "{{ _copier_conf.src_path }}"
+
+_tasks:
+  - >-
+    bash "{{ _copier_conf.src_path }}/scripts/guardrails-cli.sh" init
+    --target "."
+    --source "{{ master_source }}"
+    --modules "core,{{ primary_language }}{% if framework and framework != 'none' %},{{ framework }}{% endif %}{% if addon_design_system %},addon:design-system{% endif %}{% if addon_testing_fortress %},addon:testing-fortress{% endif %}{% if addon_storybook %},addon:storybook{% endif %}{% if addon_content_md %},addon:content-md{% endif %}{% if addon_cloudflare %},addon:cloudflare{% endif %}{% if addon_drizzle_d1 %},addon:drizzle-d1{% endif %}{% if addon_lib_exports %},addon:lib-exports{% endif %}"

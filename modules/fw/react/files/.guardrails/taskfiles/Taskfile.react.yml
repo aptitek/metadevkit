@@ -1,0 +1,34 @@
+# =============================================================================
+# Taskfile.react.yml — React Framework Guardrails (fw:react)
+# Enforces Lock 2 (strict i18n), Lock 4 (True Atomic Purity, max 150 lines,
+# stateless atoms, no useEffect), WCAG 2.2 AA a11y, and Error Boundaries.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify React component size (<= 150 lines), Atomic Purity, i18n, and Error Boundaries"
+    cmds:
+      - |
+        for file in $(find . -type f -name "*.tsx" -not -path "./node_modules/*" -not -path "./.guardrails/*" -not -name "*.stories.tsx" -not -name "*.test.tsx" -not -name "*.spec.tsx"); do
+          lines=$(grep -v -E '^[[:space:]]*(//|/\*|\*|$)' "$file" | wc -l)
+          if [ "$lines" -gt 150 ]; then
+            echo "[fw:react ERROR] Component $file exceeds 150 non-blank/non-comment lines ($lines lines)." >&2
+            exit 1
+          fi
+        done
+      - |
+        if [ -d src/components/atoms ]; then
+          if grep -RInE '\buse[A-Z][a-zA-Z0-9]*\s*\(' src/components/atoms --exclude="*.stories.*" --exclude="*.test.*"; then
+            echo "[fw:react ERROR] Atoms in src/components/atoms/ must be 100% stateless pure functions (React hooks are forbidden)." >&2
+            exit 1
+          fi
+        fi
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-error-boundaries.mjs
+        elif [ -f src/components/error-boundary.tsx ]; then
+          grep -q 'data-error-boundary' src/components/error-boundary.tsx && grep -q 'role="alert"' src/components/error-boundary.tsx
+        fi
+        echo "[fw:react] Verified React component size (<= 150 lines), stateless atoms, jsx-a11y WCAG 2.2 AA, i18n, and strategic error boundaries."

@@ -1,0 +1,11 @@
+# =============================================================================
+# Taskfile.langchain.yml — LangChain & LangGraph AI Orchestration Tasks (fw:langchain)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Validate LangChain LCEL/LangGraph patterns and SecretStr security"
+    cmds:
+      - bash .guardrails/scripts/validate-langchain.sh .

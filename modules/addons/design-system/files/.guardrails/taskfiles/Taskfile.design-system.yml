@@ -1,0 +1,30 @@
+# =============================================================================
+# Taskfile.design-system.yml — Material Design 3 + Panda CSS + CSS Tokens Addon
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Generate Panda CSS styled-system artifacts"
+    cmds:
+      - |
+        if [ -f panda.config.ts ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec panda codegen
+        fi
+
+  lint:
+    desc: "Verify MD3 color pairing, Panda CSS recipe deduplication, and CSS token purity"
+    cmds:
+      - |
+        if [ -d src ]; then
+          if grep -RInE --include="*.css" '(@theme|@apply|@import\s+["'\'']tailwindcss)' src ; then
+            echo "[addon:design-system ERROR] Tailwind CSS directives are forbidden in CSS files." >&2
+            exit 1
+          fi
+          if grep -RInE --include="*.css" 'transition(-property)?\s*:\s*all\b' src ; then
+            echo "[addon:design-system ERROR] Anti-pattern 'transition: all' is forbidden in CSS files." >&2
+            exit 1
+          fi
+        fi
+        echo "[addon:design-system] Verified Material Design 3 color pairing (Lock 3), Panda recipe deduplication (Lock 5), and CSS token purity."

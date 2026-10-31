@@ -1,0 +1,6 @@
+{
+  "id": "fw:quilt",
+  "layer": "fw",
+  "description": "Quilt MC (1.21+) modding framework with Quilt Loom (org.quiltmc.loom), quilt.mod.json schema & entrypoint verification, quilt-kotlin-libraries (QKL), and multi-module Detekt boundaries",
+  "depends_on": ["core", "lang:java", "fw:minecraft"]
+}

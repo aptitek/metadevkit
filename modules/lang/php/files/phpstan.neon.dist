@@ -1,0 +1,6 @@
+parameters:
+  level: max
+  paths:
+    - src
+    - app
+  checkMissingIterableValueType: true

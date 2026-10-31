@@ -1,0 +1,61 @@
+# =============================================================================
+# polyglot-guardrails — Minecraft 1.21+ AST & Architecture Rules (fw:minecraft)
+# Enforces Client/Server Physical Side Separation and MixinExtras Safety
+# =============================================================================
+rules:
+  - id: minecraft-no-client-import-on-server-or-common
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Minecraft Side Separation] Server and common modules/packages must NEVER
+      import 'net.minecraft.client.*' or 'com.mojang.blaze3d.*'. Doing so causes
+      NoClassDefFoundError crashes on dedicated servers.
+    paths:
+      include:
+        - "**/server/**/*.java"
+        - "**/server/**/*.kt"
+        - "**/common/**/*.java"
+        - "**/common/**/*.kt"
+    pattern-regex: '^\s*import\s+(net\.minecraft\.client|com\.mojang\.blaze3d)\.'
+
+  - id: minecraft-no-dedicated-server-import-on-client
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Minecraft Side Separation] Client packages must NEVER import
+      'net.minecraft.server.dedicated.*'.
+    paths:
+      include:
+        - "**/client/**/*.java"
+        - "**/client/**/*.kt"
+    pattern-regex: '^\s*import\s+net\.minecraft\.server\.dedicated\.'
+
+  - id: minecraft-mixin-no-overwrite
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Mixin Conflict Gate] '@Overwrite' is strictly forbidden as it fatally
+      breaks compatibility with other mods. Use '@Inject(cancellable = true)'
+      or MixinExtras '@WrapOperation'.
+    paths:
+      include:
+        - "**/*Mixin*.java"
+        - "**/*Mixin*.kt"
+        - "**/mixin/**/*.java"
+        - "**/mixin/**/*.kt"
+    pattern-regex: '@Overwrite\b'
+
+  - id: minecraft-mixin-no-redirect
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Mixin Conflict Gate] '@Redirect' is forbidden because two mods redirecting
+      the same call site crash at startup. Use MixinExtras '@WrapOperation' or
+      '@ModifyExpressionValue' instead.
+    paths:
+      include:
+        - "**/*Mixin*.java"
+        - "**/*Mixin*.kt"
+        - "**/mixin/**/*.java"
+        - "**/mixin/**/*.kt"
+    pattern-regex: '@Redirect\s*\('

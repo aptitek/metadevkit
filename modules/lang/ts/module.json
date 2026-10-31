@@ -1,0 +1,6 @@
+{
+  "id": "lang:ts",
+  "layer": "lang",
+  "description": "TypeScript strict stack with pnpm, composable ESLint Flat Config, Knip dead-code detection, and Vitest coverage",
+  "depends_on": ["core"]
+}

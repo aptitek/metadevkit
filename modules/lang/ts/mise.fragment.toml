@@ -1,0 +1,3 @@
+# --- Module: lang:ts ---
+node = "lts"
+pnpm = "latest"

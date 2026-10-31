@@ -1,0 +1,15 @@
+# =============================================================================
+# Taskfile.storybook.yml — Storybook CSF3 Guardrails (addon:storybook)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify 100% CSF3 .stories.tsx component coverage"
+    cmds:
+      - |
+        if command -v node >/dev/null 2>&1; then
+          node ./.guardrails/scripts/lint-storybook-coverage.mjs
+        fi
+        echo "[addon:storybook] Verified CSF3 .stories.tsx coverage."

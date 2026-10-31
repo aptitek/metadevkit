@@ -1,0 +1,42 @@
+# =============================================================================
+# Taskfile.php.yml — PHP Module Tasks (lang:php)
+# Tools: composer, pint, phpstan, pest
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Install Composer dependencies"
+    cmds:
+      - |
+        if [ -f composer.json ] && command -v composer >/dev/null 2>&1; then
+          composer install --no-interaction --prefer-dist
+        fi
+
+  format:
+    desc: "Format PHP sources using Laravel Pint"
+    cmds:
+      - |
+        if [ -x ./vendor/bin/pint ]; then
+          ./vendor/bin/pint --config pint.json {{.STAGED_FILES}}
+        fi
+
+  lint:
+    desc: "Verify formatting with Pint and static analysis with PHPStan"
+    cmds:
+      - |
+        if [ -x ./vendor/bin/pint ]; then
+          ./vendor/bin/pint --test --config pint.json
+        fi
+        if [ -x ./vendor/bin/phpstan ]; then
+          ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
+        fi
+
+  test:
+    desc: "Run Pest tests with minimum 80% coverage"
+    cmds:
+      - |
+        if [ -x ./vendor/bin/pest ]; then
+          ./vendor/bin/pest --coverage --min=80
+        fi

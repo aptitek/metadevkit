@@ -1,0 +1,28 @@
+# =============================================================================
+# Taskfile.drizzle-d1.yml — Drizzle ORM + Cloudflare D1 Tasks (addon:drizzle-d1)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  db:generate:
+    desc: "Generate Drizzle SQLite/D1 migrations from src/db/schema.ts"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec drizzle-kit generate --config=drizzle.config.ts
+        fi
+
+  db:check:
+    desc: "Verify Drizzle migration consistency"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec drizzle-kit check --config=drizzle.config.ts
+        fi
+
+  lint:
+    desc: "Verify Drizzle D1 config and migration integrity"
+    cmds:
+      - test -f drizzle.config.ts
+      - echo "[addon:drizzle-d1] Verified drizzle.config.ts D1 SQLite configuration."

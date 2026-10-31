@@ -1,0 +1,22 @@
+# =============================================================================
+# polyglot-guardrails — Cloudflare Workers / Pages / D1 / R2 AST Rules (Semgrep)
+# =============================================================================
+rules:
+  - id: guardrails-cloudflare-d1-no-raw-sql-interpolation
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      [Cloudflare D1 Security] Never interpolate variables directly into D1
+      '.prepare(`...${...}...`)'. Use '?' placeholders and '.bind(...)' to prevent SQL injection.
+    pattern-regex: '\.prepare\s*\(\s*`[^`]*\$\{[^}]+\}[^`]*`\s*\)'
+
+  - id: guardrails-cloudflare-no-eval-in-workers
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      [Cloudflare Workers Security] Dynamic code evaluation ('eval' or 'new Function')
+      is forbidden in Cloudflare Workers.
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)

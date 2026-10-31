@@ -1,0 +1,53 @@
+# =============================================================================
+# Taskfile.yml — polyglot-guardrails Meta-Framework Root Taskfile
+# Single Source of Truth for module composition, AST rules, and self-testing
+# =============================================================================
+version: '3'
+
+tasks:
+  default:
+    desc: "Run full meta-framework verification and integration self-test"
+    cmds:
+      - task: verify
+
+  lint:
+    desc: "Validate shell scripts, JSON metadata, and AST rule definitions"
+    cmds:
+      - bash -n ./scripts/guardrails-cli.sh
+      - bash -n ./scripts/verify-lock.sh
+      - bash -n ./scripts/self-test.sh
+      - bash -n ./modules/addons/cloudflare/files/.guardrails/scripts/validate-wrangler.sh
+      - bash -n ./modules/fw/minecraft/files/.guardrails/scripts/validate-minecraft-mod.sh
+      - bash -n ./modules/fw/quilt/files/.guardrails/scripts/validate-quilt-mod.sh
+      - bash -n ./modules/fw/fabric/files/.guardrails/scripts/validate-fabric-mod.sh
+      - bash -n ./modules/lang/python/files/.guardrails/scripts/validate-python.sh
+      - bash -n ./modules/fw/flet/files/.guardrails/scripts/validate-flet.sh
+      - bash -n ./modules/fw/nicegui/files/.guardrails/scripts/validate-nicegui.sh
+      - bash -n ./modules/fw/langchain/files/.guardrails/scripts/validate-langchain.sh
+      - bash -n ./modules/fw/jupyter/files/.guardrails/scripts/validate-jupyter.sh
+      - |
+        for jf in $(find modules -name "*.json") modules/core/files/.jscpd.json modules/core/files/.secretlintrc.json modules/lang/ts/files/.size-limit.json; do
+          jq empty "$jf"
+        done
+      - echo "[meta-lint] All scripts and JSON manifests validated."
+
+  self-test:
+    desc: "Run automated end-to-end integration test suite in temporary workspace"
+    cmds:
+      - bash ./scripts/self-test.sh
+
+  verify:
+    desc: "Verify meta-framework integrity and run end-to-end self-test"
+    cmds:
+      - task: lint
+      - task: self-test
+
+  init:
+    desc: "Initialize or convert a target project (e.g. task init -- --target /path --modules core,lang:ts,fw:react)"
+    cmds:
+      - bash ./scripts/guardrails-cli.sh init {{.CLI_ARGS}}
+
+  guard:check:
+    desc: "Run lock check on a target directory (defaults to self-test verification)"
+    cmds:
+      - task: self-test

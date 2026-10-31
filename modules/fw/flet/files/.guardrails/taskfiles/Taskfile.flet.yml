@@ -1,0 +1,27 @@
+# =============================================================================
+# Taskfile.flet.yml — Flet Material Design 3 UI Tasks (fw:flet)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Run Flet application in development mode via uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          uv run flet run --web
+        fi
+
+  lint:
+    desc: "Validate Flet Material Design 3 tokens and 5-level Atomic Design boundaries"
+    cmds:
+      - bash .guardrails/scripts/validate-flet.sh .
+
+  test:
+    desc: "Run Flet unit and Playwright E2E tests via uv"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
+          uv run pytest
+        fi

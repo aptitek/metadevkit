@@ -1,0 +1,15 @@
+# =============================================================================
+# detekt-client-boundary.yml — Client-Side Detekt Boundary Overlay
+# Prevents client-only modules from importing dedicated server classes
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+style:
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'net.minecraft.server.dedicated.*'
+        reason: 'Client-only modules must never import dedicated server Minecraft classes.'
+      - value: 'org.quiltmc.qsl.base.api.entrypoint.server.*'
+        reason: 'Client-only modules must not use Quilt dedicated server entrypoints.'
+      - value: 'net.fabricmc.api.DedicatedServerModInitializer'
+        reason: 'Client-only modules must not use Fabric DedicatedServerModInitializer.'

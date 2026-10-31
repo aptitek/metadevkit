@@ -1,0 +1,71 @@
+# =============================================================================
+# Taskfile.kotlin.yml — Kotlin 2.x (K2) Module Tasks (lang:kotlin)
+# Tools: gradle, detekt (detekt-formatting, maxIssues: 0), kotest, jacoco
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  setup:
+    desc: "Verify Kotlin & Gradle wrapper setup"
+    cmds:
+      - |
+        if [ -f ./gradlew ]; then
+          chmod +x ./gradlew
+          ./gradlew --version >/dev/null
+        fi
+
+  format:
+    desc: "Format Kotlin sources using Detekt autoCorrect (detekt-formatting)"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "detekt"; then
+            ./gradlew detekt --auto-correct --console=plain
+          fi
+        fi
+
+  lint:
+    desc: "Run Detekt static analysis (maxIssues: 0, warningsAsErrors: true) and Kotlin AST checks"
+    cmds:
+      - |
+        if [ ! -f detekt.yml ]; then
+          echo "[KOTLIN LINT ERROR] Missing locked detekt.yml configuration." >&2
+          exit 1
+        fi
+        if [ -d src ]; then
+          if grep -RInE --include="*.kt" '^\s*import\s+[a-zA-Z0-9_.]+\.\*\s*$' src/ ; then
+            echo "[KOTLIN LINT ERROR] Wildcard imports ('import ...*') are forbidden in Kotlin sources." >&2
+            exit 1
+          fi
+          if grep -RInE --include="*.kt" '\bGlobalScope\s*\.' src/ ; then
+            echo "[KOTLIN LINT ERROR] GlobalScope is forbidden. Use structured CoroutineScope." >&2
+            exit 1
+          fi
+        fi
+        if [ -d src/main ]; then
+          if grep -RInE --include="*.kt" '[a-zA-Z0-9_)\]}]!!' src/main/ ; then
+            echo "[KOTLIN LINT ERROR] Non-null assertion operator ('!!') is forbidden in src/main/." >&2
+            exit 1
+          fi
+          if grep -RInE --include="*.kt" '\b(println|print)\s*\(' src/main/ ; then
+            echo "[KOTLIN LINT ERROR] Direct println()/print() calls are forbidden in src/main/. Use SLF4J Logger." >&2
+            exit 1
+          fi
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "detekt"; then
+            ./gradlew detekt --console=plain
+          fi
+        fi
+
+  test:
+    desc: "Run Kotest / JUnit 5 suites and JaCoCo coverage report"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          ./gradlew test --console=plain
+          if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestReport"; then
+            ./gradlew jacocoTestReport --console=plain
+          fi
+        fi

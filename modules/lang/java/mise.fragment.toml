@@ -1,0 +1,3 @@
+# --- Module: lang:java ---
+java = "temurin-21"
+gradle = "latest"
