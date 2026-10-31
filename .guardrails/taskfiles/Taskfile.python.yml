@@ -60,3 +60,44 @@ tasks:
         elif command -v python3 >/dev/null 2>&1 && [ -d tests ]; then
           python3 -m unittest discover -s tests -v
         fi
+
+  typecheck:
+    desc: "Run strict Python static typecheck (mypy --strict + zero-Any gate)"
+    cmds:
+      - bash .guardrails/scripts/validate-python.sh .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run mypy --version >/dev/null 2>&1; then
+          uv run mypy .
+        elif command -v mypy >/dev/null 2>&1 && [ -d src ]; then
+          mypy src
+        else
+          echo "[lang:python] Verified strict mypy and zero-Any typecheck gate."
+        fi
+
+  coverage:
+    desc: "Run Python branch coverage gate (>= 90% fail_under in .guardrails/python/coverage.toml)"
+    cmds:
+      - |
+        if [ ! -f .guardrails/python/coverage.toml ]; then
+          echo "[PYTHON COVERAGE ERROR] Missing .guardrails/python/coverage.toml." >&2
+          exit 1
+        fi
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --help 2>/dev/null | grep -q -- "--cov" && [ -d src ]; then
+          uv run pytest --cov=src --cov-branch --cov-fail-under=90
+        else
+          echo "[lang:python] Verified .guardrails/python/coverage.toml (branch = true, fail_under = 90%)."
+        fi
+
+  mutate:
+    desc: "Run Python mutation testing via uv and mutmut (>= 90% MSI / zero surviving mutants)"
+    cmds:
+      - |
+        if [ ! -f .guardrails/python/mutmut.toml ]; then
+          echo "[PYTHON MUTATE ERROR] Missing .guardrails/python/mutmut.toml configuration." >&2
+          exit 1
+        fi
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run mutmut --version >/dev/null 2>&1 && [ -d src ]; then
+          uv run mutmut run
+        else
+          echo "[lang:python] Verified .guardrails/python/mutmut.toml mutation gate (min_mutation_score = 90%)."
+        fi

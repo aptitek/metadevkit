@@ -1,0 +1,23 @@
+# =============================================================================
+# coverage.toml — Locked Python Branch Coverage Gate (lang:python)
+# Enforces >= 90% branch + line coverage across src/
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+[run]
+source = ["src"]
+branch = true
+omit = [
+  "*/__init__.py",
+  "*/tests/*",
+]
+
+[report]
+fail_under = 90
+show_missing = true
+skip_empty = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "@abstractmethod",
+]

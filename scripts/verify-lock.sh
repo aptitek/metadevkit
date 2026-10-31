@@ -80,8 +80,8 @@ fi
 
 # Inspect Taskfile.local.yml if present to forbid overriding core guardrail tasks
 if [[ -f "$LOCAL_TASKFILE" ]]; then
-  if grep -E -q '^[[:space:]]*(guard:check|guard:sync|verify|feature:add)[[:space:]]*:' "$LOCAL_TASKFILE"; then
-    echo -e "${RED}[TAMPER DETECTED] Taskfile.local.yml attempts to override protected guardrail tasks (guard:check, guard:sync, verify, or feature:add).${NC}" >&2
+  if grep -E -q '^[[:space:]]*(guard:check|guard:sync|verify|feature:add|mutate|a11y|i18n|typecheck|coverage)[[:space:]]*:' "$LOCAL_TASKFILE"; then
+    echo -e "${RED}[TAMPER DETECTED] Taskfile.local.yml attempts to override protected guardrail tasks (guard:check, guard:sync, verify, feature:add, mutate, a11y, i18n, typecheck, or coverage).${NC}" >&2
     violations=$((violations + 1))
   fi
 fi

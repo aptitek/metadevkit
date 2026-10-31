@@ -2,19 +2,21 @@
 
 `polyglot-guardrails` is a composable, zero-config-drift meta-framework that enforces **Haskell-grade Architectural Fortress** quality gates across Web, Cloud, JVM / Minecraft Modding, and Python (`uv`) / AI / Jupyter repositories.
 
-## Architecture: 4 Composable Strata (23 Modules)
+## Architecture: 4 Composable Strata (25 Modules)
 
 1. **`core` (Mandatory Universal Foundation)**:
    - `mise.toml`: `go-task`, `lefthook`, `jscpd` (`0%` duplication tolerance), `lizard`, `trivy`, `semgrep`, `copier`
-   - `Taskfile.base.yml`: Universal lifecycle contract (`setup`, `dev`, `format`, `lint`, `dup`, `complexity`, `sec`, `test`, `verify`, `check:quick`, `test:quick`, `check:commit`, `check:push`, `guard:check`, `guard:sync`, `feature:add`)
+   - `Taskfile.base.yml`: Universal lifecycle contract (`setup`, `dev`, `format`, `lint`, `typecheck`, `a11y`, `i18n`, `dup`, `complexity`, `sec`, `test`, `coverage`, `mutate`, `verify`, `check:quick`, `test:quick`, `check:commit`, `check:push`, `guard:check`, `guard:sync`, `feature:add`)
+   - `validate-i18n-and-a11y.sh`: Cross-language 100% locale JSON key parity (`locales/`, `i18n/`, `assets/<modid>/lang/`), WCAG 2.2 AA JSX/Astro checks, Flet/NiceGUI semantic labels & tooltips, and Minecraft Screen Narrator (`Component.translatable`) enforcement
    - `lefthook.yml`, `commitlint.config.mjs` (mandatory architectural scopes, min 15-char subject), `.secretlintrc.json` + `lint-secrets.mjs`
    - `AGENTS.md` + `.agents/skills/vibe-guardrails/SKILL.md`: Strict AI Vibe-Coding contract
 2. **`lang:<language>` (Language Stratum)**:
-   - `lang:ts` (Full implementation: **Lock 1 Functional Purity & Total Functions** (`complexity <= 3`, `max-depth <= 1`, `max-lines <= 150`, `max-lines-per-function <= 28`, `max-params <= 3`, zero `let`/`var`/loops/`else`/`as T`/`x!`/`throw`), `pnpm`, `tsconfig.base.json`, dynamic `eslint.config.mjs`, `knip.json`, `.dependency-cruiser.cjs`, `.prettierrc.mjs`, `.size-limit.json`, `vitest.config.ts` with 95% per-file coverage, `lint-deprecated-deps.mjs`)
-   - `lang:python` (**Geranium Quality Fortress**: `uv` exclusive dependency management, `ruff.toml` with `max-complexity = 8`, `max-statements = 20`, `max-args = 5`, `max-branches = 8`, `max-returns = 4`, `line-length = 120`, `<= 256` lines per `.py` file, strict `mypy`, `radon cc`, `vulture`, `pydantic-settings` `/run/secrets/` secret hygiene, and `pytest`)
-   - `lang:kotlin` (Kotlin 2.x K2 JVM stack: Gradle Kotlin DSL, **Detekt** `detekt.yml` with `maxIssues: 0` & `warningsAsErrors: true` + `detekt-formatting` + per-module `ForbiddenImport` boundary overlays, **Kotest** JUnit 5 + property testing, Coroutines test, JaCoCo with `**/mixin/**` exclusion)
-   - `lang:java` (Java 21 stack: Gradle, Spotless, Checkstyle `checkstyle.xml`, PMD `pmd-ruleset.xml`, JUnit 5, JaCoCo, and AST rules banning wildcard imports, `System.out`, `printStackTrace()`, and raw `Optional.get()`)
-   - `lang:php` (`composer`, `pint`, `phpstan`, `pest`)
+   - `lang:ts` (Full implementation: **Lock 1 Functional Purity & Total Functions** (`complexity <= 3`, `max-depth <= 1`, `max-lines <= 150`, `max-lines-per-function <= 28`, `max-params <= 3`, zero `let`/`var`/loops/`else`/`as T`/`x!`/`throw`), `pnpm`, `tsconfig.base.json`, dynamic `eslint.config.mjs`, `knip.json`, `.dependency-cruiser.cjs`, `.prettierrc.mjs`, `.size-limit.json`, `vitest.config.ts` with 95% per-file coverage, **StrykerJS** `stryker.config.mjs` `>= 95%` mutation score)
+   - `lang:python` (**Geranium Quality Fortress**: `uv` exclusive dependency management, `ruff.toml` with `max-complexity = 8`, `max-statements = 20`, `max-args = 5`, `max-branches = 8`, `max-returns = 4`, `line-length = 120`, `<= 256` lines per `.py` file, strict `mypy` + zero-`Any` in `src/`, `coverage.toml` `>= 90%` branch coverage, and **mutmut** `mutmut.toml` `>= 90%` mutation score)
+   - `lang:kotlin` (Kotlin 2.x K2 JVM stack: Gradle Kotlin DSL, **Detekt** `detekt.yml` with `maxIssues: 0` & `warningsAsErrors: true` + `detekt-formatting` + per-module `ForbiddenImport` boundary overlays, **Kotest** JUnit 5 + property testing, JaCoCo `>= 85%` coverage, and **PITest 1.30.0 + Arcmutate Kotlin** `pitest-kotlin.gradle.kts` `>= 85%` mutation threshold)
+   - `lang:java` (Java 21 stack: Gradle, Spotless, Checkstyle `checkstyle.xml`, PMD `pmd-ruleset.xml`, JUnit 5, JaCoCo `>= 85%` coverage, **PITest 1.30.0** `pitest.gradle.kts` `>= 85%` mutation threshold, and AST rules banning wildcard imports, `System.out`, `printStackTrace()`, and raw `Optional.get()`)
+   - `lang:php` (`composer`, `pint`, `phpstan` level `max`, `declare(strict_types=1);` enforcement, `pest` `>= 85%` coverage, and **Infection PHP + PHPStan** `infection.json5` `>= 85%` MSI / `>= 90%` Covered MSI)
+   - `lang:shell` (`shellcheck`, `shfmt`, `bash -n`, `set -euo pipefail`, zero `eval` / `curl | sh` / unquoted `$`)
 3. **`fw:<framework>` (Hierarchical Framework Stratum)**:
    - `fw:react` (Depends on `lang:ts`: **Lock 2 Strict i18n**, **Lock 4 True Atomic Purity & Stateless Atoms**, WCAG 2.2 AA `a11y.mjs`, max 150 lines per `.tsx`, `lint-error-boundaries.mjs`)
    - `fw:react-router` (Depends on `lang:ts` > `fw:react`: route parsimony max 2 top-level layouts & max 12 routes, nested `<Outlet />` hierarchy, loader/action separation)
@@ -27,8 +29,9 @@
    - `fw:quilt` (Depends on `fw:minecraft`: Quilt Loom `org.quiltmc.loom`, `quilt.mod.json` schema & entrypoint/mixin config verification, `quilt-kotlin-libraries`)
    - `fw:fabric` (Depends on `fw:minecraft`: Fabric Loom `fabric-loom`, `fabric.mod.json` schema & entrypoint/mixin config verification, Fabric API, `fabric-language-kotlin`)
 4. **`addon:<feature>` (Orthogonal Cross-Cutting Addons)**:
+   - `addon:devkit` (Self-governance for `polyglot-guardrails`: `validate-devkit.sh` enforcing `module.json` schemas, `SKILL.md <= 100` lines 3-tier Progressive Disclosure, and Semgrep AST rule integrity)
    - `addon:design-system` (**Lock 3 M3 Token Purity & Color Pairing** + **Lock 5 Panda CSS Recipes & Canonical Deduplication**, `panda.config.ts`, `lint-css-tokens.mjs`)
-   - `addon:testing-fortress` (**Lock 6 Test Assertion Purity**, zero `vi.mock()`/`it.skip`/weak matchers, 1:1 `.test.ts(x)` TDD companions, `stryker.config.mjs` 95% mutation threshold, `playwright.config.ts`)
+   - `addon:testing-fortress` (**Polyglot Lock 6 Test Assertion Purity**: zero skipped/focused tests, zero weak/tautological assertions, zero `vi.mock()`, 1:1 `.test.ts(x)` TDD companions, cross-language mutation testing via `task mutate`, and `playwright.config.ts`)
    - `addon:storybook` (100% CSF3 `.stories.tsx` component coverage & CSF3 AST enforcement)
    - `addon:content-md` (`.remarkrc.mjs`, Markdown structural integrity, zero-styling `.mdx` purity, course frontmatter & simulation registry validation)
    - `addon:cloudflare` (`wrangler`, `cloudflared`, `wrangler.toml` validation, Workers/D1/R2 AST rules)

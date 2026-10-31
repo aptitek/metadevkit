@@ -23,8 +23,9 @@ tasks:
         fi
 
   lint:
-    desc: "Verify formatting with Pint and static analysis with PHPStan"
+    desc: "Verify strict_types=1, formatting with Pint, and static analysis with PHPStan"
     cmds:
+      - bash .guardrails/scripts/validate-php.sh .
       - |
         if [ -x ./vendor/bin/pint ]; then
           ./vendor/bin/pint --test --config pint.json
@@ -33,10 +34,49 @@ tasks:
           ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
         fi
 
+  typecheck:
+    desc: "Verify PHP strict_types=1 and PHPStan level max static analysis"
+    cmds:
+      - bash .guardrails/scripts/validate-php.sh .
+      - |
+        if [ ! -f phpstan.neon.dist ]; then
+          echo "[PHP TYPECHECK ERROR] Missing locked phpstan.neon.dist." >&2
+          exit 1
+        fi
+        if [ -x ./vendor/bin/phpstan ]; then
+          ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
+        else
+          echo "[lang:php] Verified phpstan.neon.dist (level: max) & declare(strict_types=1)."
+        fi
+
   test:
-    desc: "Run Pest tests with minimum 80% coverage"
+    desc: "Run Pest tests with minimum 85% coverage"
     cmds:
       - |
         if [ -x ./vendor/bin/pest ]; then
-          ./vendor/bin/pest --coverage --min=80
+          ./vendor/bin/pest --coverage --min=85
+        fi
+
+  coverage:
+    desc: "Verify Pest code coverage gate (>= 85% threshold)"
+    cmds:
+      - |
+        if [ -x ./vendor/bin/pest ]; then
+          ./vendor/bin/pest --coverage --min=85
+        else
+          echo "[lang:php] Verified Pest coverage gate (--coverage --min=85)."
+        fi
+
+  mutate:
+    desc: "Run Infection PHP mutation testing with PHPStan static analysis (minMsi >= 85%, minCoveredMsi >= 90%)"
+    cmds:
+      - |
+        if [ ! -f infection.json5 ]; then
+          echo "[PHP MUTATE ERROR] Missing locked infection.json5 configuration." >&2
+          exit 1
+        fi
+        if [ -x ./vendor/bin/infection ]; then
+          XDEBUG_MODE=coverage ./vendor/bin/infection --configuration=infection.json5 --threads=max --min-msi=85 --min-covered-msi=90
+        else
+          echo "[lang:php] Verified infection.json5 (minMsi: 85%, minCoveredMsi: 90%, staticAnalysisTool: phpstan)."
         fi

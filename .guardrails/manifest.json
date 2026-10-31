@@ -1,11 +1,12 @@
 {
   "schema_version": "1.0.0",
   "master_source": ".",
-  "master_commit": "5c59e16",
+  "master_commit": "7a754e2",
   "modules": [
     "core",
     "lang:shell",
     "lang:python",
-    "addon:devkit"
+    "addon:devkit",
+    "addon:testing-fortress"
   ]
 }

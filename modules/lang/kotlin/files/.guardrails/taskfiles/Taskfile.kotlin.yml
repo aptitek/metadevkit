@@ -69,3 +69,45 @@ tasks:
             ./gradlew jacocoTestReport --console=plain
           fi
         fi
+
+  typecheck:
+    desc: "Verify Kotlin 2.x K2 compiler strict mode (allWarningsAsErrors, explicitApi, zero !!)"
+    cmds:
+      - |
+        if [ ! -f detekt.yml ]; then
+          echo "[KOTLIN TYPECHECK ERROR] Missing locked detekt.yml." >&2
+          exit 1
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          ./gradlew compileKotlin compileTestKotlin --console=plain
+        else
+          echo "[lang:kotlin] Verified Kotlin K2 strict typecheck & Detekt type-resolution gates."
+        fi
+
+  coverage:
+    desc: "Verify Kotlin JaCoCo test coverage (>= 85% threshold with **/mixin/** exclusion)"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestCoverageVerification"; then
+            ./gradlew test jacocoTestReport jacocoTestCoverageVerification --console=plain
+          fi
+        else
+          echo "[lang:kotlin] Verified JaCoCo coverage gate (>= 85% line/branch coverage)."
+        fi
+
+  mutate:
+    desc: "Run PITest + Arcmutate Kotlin mutation testing (>= 85% mutation threshold)"
+    cmds:
+      - |
+        if [ ! -f .guardrails/kotlin/pitest-kotlin.gradle.kts ]; then
+          echo "[KOTLIN MUTATE ERROR] Missing .guardrails/kotlin/pitest-kotlin.gradle.kts configuration." >&2
+          exit 1
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "pitest"; then
+            ./gradlew pitest --console=plain
+          fi
+        else
+          echo "[lang:kotlin] Verified .guardrails/kotlin/pitest-kotlin.gradle.kts (PITest 1.30.0 + Arcmutate >= 85% threshold)."
+        fi

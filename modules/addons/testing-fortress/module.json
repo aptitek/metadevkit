@@ -1,6 +1,6 @@
 {
   "id": "addon:testing-fortress",
   "layer": "addon",
-  "depends_on": ["core", "lang:ts"],
-  "description": "Testing Fortress: Lock 6 (test assertion purity, no mocks, no skips/weak assertions), 1:1 TDD unit test companions, StrykerJS mutation testing (>= 95%), and Playwright + Axe WCAG 2.2 AA E2E"
+  "depends_on": ["core"],
+  "description": "Polyglot Testing Fortress: Lock 6 (test assertion purity, zero mocks/skips/tautological assertions across TS/Python/Java/Kotlin/PHP), 1:1 TDD unit test companions, Mutation Testing (StrykerJS >=95%, mutmut >=90%, PITest/Arcmutate >=85%, Infection >=85%), and Playwright + Axe WCAG 2.2 AA E2E"
 }

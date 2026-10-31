@@ -1,0 +1,23 @@
+{
+  "$schema": "vendor/infection/infection/resources/schema.json",
+  "source": {
+    "directories": [
+      "src"
+    ]
+  },
+  "logs": {
+    "text": "reports/mutation/infection.log",
+    "summary": "reports/mutation/infection.summary.log",
+    "html": "reports/mutation/infection.html",
+    "stryker": {
+      "report": "main"
+    }
+  },
+  "mutators": {
+    "@default": true
+  },
+  "testFramework": "phpunit",
+  "staticAnalysisTool": "phpstan",
+  "minMsi": 85,
+  "minCoveredMsi": 90
+}

@@ -15,6 +15,11 @@ You MUST interact with the repository **exclusively** through the universal `tas
 | Tier 1 (< 3s): Fast unit test check | `task test:quick` |
 | Tier 2 (< 10s): Pre-commit verification gate | `task check:commit` |
 | Tier 3: Pre-push full architectural fortress gate | `task check:push` / `task verify` |
+| Run cross-language static typechecking | `task typecheck` |
+| Run cross-language WCAG 2.2 AA / UI / Narrator accessibility | `task a11y` |
+| Run cross-language i18n locale parity & literal check | `task i18n` |
+| Run cross-language branch & line coverage verification | `task coverage` |
+| Run cross-language mutation testing (StrykerJS, mutmut, PITest, Infection) | `task mutate` |
 | Initialize a target project | `task init -- --target <dir> --modules <m1,m2>` |
 | Verify config lock | `task guard:check` |
 | Sync guardrails | `task guard:sync` |
@@ -26,7 +31,7 @@ You MUST interact with the repository **exclusively** through the universal `tas
 All configuration files tracked in `.guardrails.lock` in child projects are cryptographically locked via SHA-256 checksums:
 - `Taskfile.yml`, `mise.toml`, `lefthook.yml`, `.jscpd.json`, `commitlint.config.mjs`, `.secretlintrc.json`, `AGENTS.md`
 - `eslint.config.mjs`, `tsconfig.base.json`, `knip.json`, `vitest.config.ts`, `.dependency-cruiser.cjs`, `.prettierrc.mjs`, `.size-limit.json`
-- `panda.config.ts`, `stryker.config.mjs`, `playwright.config.ts`, `.remarkrc.mjs`, `drizzle.config.ts`, `ruff.toml`, `detekt.yml`, `pint.json`, `phpstan.neon.dist`
+- `panda.config.ts`, `stryker.config.mjs`, `playwright.config.ts`, `.remarkrc.mjs`, `drizzle.config.ts`, `ruff.toml`, `detekt.yml`, `pint.json`, `phpstan.neon.dist`, `infection.json5`
 - Everything inside `.guardrails/**` and `.agents/**`
 
 ---
@@ -37,7 +42,7 @@ All configuration files tracked in `.guardrails.lock` in child projects are cryp
 3. **Lock 3 (`addon:design-system` — M3 Token Purity & Color Pairing)**: Bans hardcoded colors/durations/radii/fonts and enforces MD3 `bg` ↔ `color` semantic token pairing.
 4. **Lock 4 (`fw:react` — True Atomic Purity & Stateless Atoms)**: Bans raw HTML (`<div>`), `<panda.div>`, `style={}`, Tailwind classes, `useEffect` in UI/routes, and all `use*` hooks in `src/components/atoms/`.
 5. **Lock 5 (`addon:design-system` — Panda CSS Recipes & Canonical Deduplication)**: Max 3 inline layout props on JSX containers, mandatory `defaultVariants`, styled slot anatomy, and commutative recipe block deduplication.
-6. **Lock 6 (`addon:testing-fortress` — Test Assertion Purity & 1:1 TDD Companions)**: Bans `it.skip`/`test.only`, weak matchers (`toBeTruthy`/`toMatchSnapshot`), and `vi.mock()`. Requires 1:1 `.test.ts(x)` companions, 95% per-file Vitest coverage, and 95% StrykerJS mutation score.
+6. **Lock 6 (`addon:testing-fortress` — Polyglot Test Assertion Purity, 1:1 TDD Companions & Mutation Testing)**: Bans skipped/focused tests (`it.skip`, `test.only`, `pytest.skip`, `@Disabled`, `->skip()`), weak/tautological matchers (`toBeTruthy`, `toMatchSnapshot`, `assert True`, `assertTrue(true)`), and `vi.mock()`. Requires 1:1 `.test.ts(x)` companions and enforces cross-language coverage & mutation gates (`StrykerJS >= 95%`, `mutmut >= 90%`, `PITest + Arcmutate >= 85%`, `Infection + PHPStan >= 85%`).
 7. **JVM & Minecraft Modding Gates (`lang:java`, `lang:kotlin`, `fw:minecraft`, `fw:quilt`, `fw:fabric`)**:
    - **Detekt & Checkstyle/PMD Fortress**: `maxIssues: 0`, `warningsAsErrors: true`, `CyclomaticComplexMethod <= 10`, `CognitiveComplexMethod <= 10`, `LongMethod <= 40`, `LargeClass <= 250`, zero wildcard imports, zero `!!` non-null assertions in `src/main/`, zero `GlobalScope`, and zero `println`/`System.out`.
    - **Client/Server Physical Side Separation**: `server/` and `common/` packages must NEVER import `net.minecraft.client.*`, `com.mojang.blaze3d.*`, or client-only loader entrypoints. `client/` packages must NEVER import `net.minecraft.server.dedicated.*`.

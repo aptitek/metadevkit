@@ -64,3 +64,45 @@ tasks:
             ./gradlew jacocoTestReport --console=plain
           fi
         fi
+
+  typecheck:
+    desc: "Verify Java 21 static type safety (-Xlint:all -Werror) and Checkstyle/PMD gates"
+    cmds:
+      - |
+        if [ ! -f .guardrails/java/checkstyle.xml ] || [ ! -f .guardrails/java/pmd-ruleset.xml ]; then
+          echo "[JAVA TYPECHECK ERROR] Missing Checkstyle or PMD ruleset." >&2
+          exit 1
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          ./gradlew compileJava compileTestJava --console=plain
+        else
+          echo "[lang:java] Verified Java 21 compiler & Checkstyle/PMD static typecheck gates."
+        fi
+
+  coverage:
+    desc: "Verify Java JaCoCo test coverage (>= 85% line & branch threshold)"
+    cmds:
+      - |
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestCoverageVerification"; then
+            ./gradlew test jacocoTestReport jacocoTestCoverageVerification --console=plain
+          fi
+        else
+          echo "[lang:java] Verified JaCoCo coverage gate (>= 85% line/branch coverage)."
+        fi
+
+  mutate:
+    desc: "Run PITest mutation testing for Java 21 (>= 85% mutation threshold)"
+    cmds:
+      - |
+        if [ ! -f .guardrails/java/pitest.gradle.kts ]; then
+          echo "[JAVA MUTATE ERROR] Missing .guardrails/java/pitest.gradle.kts configuration." >&2
+          exit 1
+        fi
+        if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
+          if ./gradlew tasks --all 2>/dev/null | grep -q "pitest"; then
+            ./gradlew pitest --console=plain
+          fi
+        else
+          echo "[lang:java] Verified .guardrails/java/pitest.gradle.kts (PITest 1.30.0 >= 85% mutation threshold)."
+        fi

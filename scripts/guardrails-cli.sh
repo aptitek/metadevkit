@@ -175,6 +175,7 @@ generate_lockfile() {
     "detekt.yml"
     "pint.json"
     "phpstan.neon.dist"
+    "infection.json5"
   )
 
   local -a existing_files=()
@@ -236,6 +237,7 @@ apply_modules() {
     "${target_dir}/.guardrails/eslint" \
     "${target_dir}/.guardrails/java" \
     "${target_dir}/.guardrails/kotlin" \
+    "${target_dir}/.guardrails/python" \
     "${target_dir}/.guardrails/taskfiles" \
     "${target_dir}/.guardrails/scripts" \
     "${target_dir}/.agents/rules" \
@@ -245,6 +247,7 @@ apply_modules() {
     "${target_dir}/.guardrails/eslint/"* \
     "${target_dir}/.guardrails/java/"* \
     "${target_dir}/.guardrails/kotlin/"* \
+    "${target_dir}/.guardrails/python/"* \
     "${target_dir}/.guardrails/taskfiles/"* \
     "${target_dir}/.agents/rules/"* \
     "${target_dir}/.agents/skills/"*
@@ -295,9 +298,11 @@ apply_modules() {
     cp "${master_dir}/rules/ast/"*.yml "${target_dir}/.guardrails/ast/"
   fi
 
-  # Synchronize internal scripts
-  cp "${master_dir}/scripts/verify-lock.sh" "${target_dir}/.guardrails/scripts/verify-lock.sh"
-  cp "${master_dir}/scripts/guardrails-cli.sh" "${target_dir}/.guardrails/scripts/guardrails-cli.sh"
+  # Synchronize internal scripts atomically via mv to avoid mutating an open Bash FD
+  cp "${master_dir}/scripts/verify-lock.sh" "${target_dir}/.guardrails/scripts/verify-lock.sh.tmp"
+  mv -f "${target_dir}/.guardrails/scripts/verify-lock.sh.tmp" "${target_dir}/.guardrails/scripts/verify-lock.sh"
+  cp "${master_dir}/scripts/guardrails-cli.sh" "${target_dir}/.guardrails/scripts/guardrails-cli.sh.tmp"
+  mv -f "${target_dir}/.guardrails/scripts/guardrails-cli.sh.tmp" "${target_dir}/.guardrails/scripts/guardrails-cli.sh"
   chmod +x "${target_dir}/.guardrails/scripts/"*.sh 2>/dev/null || true
 
   # Write .guardrails/manifest.json

@@ -43,6 +43,12 @@ while IFS= read -r -d '' py_file; do
       echo "❌ [PYTHON GATE] ${py_file}: Vague variable name ('data', 'res', 'temp', or 'info') assigned in src/. Use a descriptive domain identifier." >&2
       ERRORS=$((ERRORS + 1))
     fi
+
+    # Check 2d: Zero explicit 'Any' type annotations in src/
+    if grep -nE '(:\s*Any\b|->\s*Any\b)' "${py_file}" | grep -vE '^\s*#' >/dev/null 2>&1; then
+      echo "❌ [PYTHON GATE] ${py_file}: Explicit 'Any' type annotation in src/ is forbidden. Use concrete types, TypeVar, Protocol, or object." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
   fi
 done < <(find "${ROOT_DIR}" \
   -type d \( -name ".venv" -o -name "venv" -o -name "__pycache__" -o -name ".git" -o -name ".mypy_cache" -o -name ".ruff_cache" -o -name ".pytest_cache" -o -name "build" -o -name "dist" \) -prune \

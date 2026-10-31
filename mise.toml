@@ -1,6 +1,6 @@
 # =============================================================================
 # mise.toml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
-# Active modules: core lang:shell lang:python addon:devkit
+# Active modules: core lang:shell lang:python addon:devkit addon:testing-fortress
 # =============================================================================
 [tools]
 

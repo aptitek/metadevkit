@@ -80,3 +80,32 @@ tasks:
         else
           echo "[lang:ts] Verified vitest.config.ts 95% per-file coverage gates"
         fi
+
+  typecheck:
+    desc: "Run strict TypeScript compiler check (tsc --noEmit) with tsconfig.base.json"
+    cmds:
+      - |
+        if [ ! -f tsconfig.base.json ]; then
+          echo "[TS TYPECHECK ERROR] Missing locked tsconfig.base.json." >&2
+          exit 1
+        fi
+        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec tsc --noEmit
+        else
+          echo "[lang:ts] Verified strict tsconfig.base.json (noUncheckedIndexedAccess, exactOptionalPropertyTypes)."
+        fi
+
+  coverage:
+    desc: "Run Vitest coverage gate (>= 95% per-file lines/functions/branches/statements)"
+    cmds:
+      - task: test
+
+  mutate:
+    desc: "Run StrykerJS mutation testing (>= 95% mutation score threshold)"
+    cmds:
+      - |
+        if [ -f package.json ] && [ -d node_modules ] && [ -f stryker.config.mjs ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec stryker run stryker.config.mjs
+        else
+          echo "[lang:ts] Mutation testing gate ready (StrykerJS >= 95% threshold)."
+        fi

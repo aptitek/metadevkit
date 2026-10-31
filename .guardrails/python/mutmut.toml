@@ -1,0 +1,13 @@
+# =============================================================================
+# mutmut.toml — Python Mutation Testing Reference Configuration (lang:python)
+# Tool: mutmut (uv run mutmut run) + Hypothesis property-based testing
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+[tool.mutmut]
+paths_to_mutate = ["src/"]
+tests_dir = ["tests/"]
+pytest_add_cli_args = ["-q", "--tb=short"]
+also_copy = ["src/", "tests/"]
+max_survivors = 0
+min_mutation_score = 90
+report_output = "reports/mutation/mutation.json"

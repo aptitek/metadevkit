@@ -8,9 +8,10 @@ description: Strict architectural, AST, and Zero-Config-Drift guardrails for AI 
 ## Golden Rules for AI Coding Agents
 1. **Use `task` Exclusively**:
    - Run `task check:quick` / `task test:quick` during inner-loop TDD.
+   - Run `task typecheck`, `task a11y`, `task i18n`, `task coverage`, and `task mutate` for cross-language verification.
    - Run `task check:commit` before committing.
-   - Run `task verify` (`guard:check` -> `lint` -> `dup` -> `complexity` -> `sec` -> `test`) before finishing any task.
-   - Never invoke `pnpm`, `npm`, `npx`, `uv`, `pip`, `poetry`, `gradle`, `./gradlew`, `detekt`, `composer`, `eslint`, `vitest`, or `jupyter` directly.
+   - Run `task verify` (`guard:check` -> `lint` -> `typecheck` -> `a11y` -> `i18n` -> `dup` -> `complexity` -> `sec` -> `test` -> `coverage` -> `mutate`) before finishing any task.
+   - Never invoke `pnpm`, `npm`, `npx`, `uv`, `pip`, `poetry`, `gradle`, `./gradlew`, `detekt`, `composer`, `eslint`, `vitest`, `stryker`, `mutmut`, `infection`, or `jupyter` directly.
 2. **Respect `.guardrails.lock` (Zero Config Drift)**:
    - Never modify `Taskfile.yml`, `eslint.config.mjs`, `tsconfig.base.json`, `mise.toml`, `lefthook.yml`, `.jscpd.json`, `commitlint.config.mjs`, `.dependency-cruiser.cjs`, `panda.config.ts`, `stryker.config.mjs`, `ruff.toml`, `detekt.yml`, or `.guardrails/**`.
    - Use `Taskfile.local.yml` only for project-specific business tasks.

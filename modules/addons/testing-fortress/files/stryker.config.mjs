@@ -1,10 +1,14 @@
 // =============================================================================
 // stryker.config.mjs — StrykerJS Mutation Testing Configuration
+// Outputs unified mutation-testing-elements JSON schema (reports/mutation/mutation.json)
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
 export default {
   packageManager: "pnpm",
-  reporters: ["clear-text", "progress"],
+  reporters: ["clear-text", "progress", "html", "json"],
+  jsonReporter: {
+    fileName: "reports/mutation/mutation.json",
+  },
   testRunner: "vitest",
   coverageAnalysis: "perTest",
   incremental: true,
