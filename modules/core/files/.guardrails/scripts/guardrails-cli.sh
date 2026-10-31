@@ -767,7 +767,7 @@ apply_modules() {
     cp -P "$vfs_file" "${target_dir}/${rel_dest}"
   done < <(find "$vfs_dir" -type f -print0)
 
-  for managed_root in "${target_dir}/.guardrails" "${target_dir}/.agents"; do
+  for managed_root in "${target_dir}/.guardrails" "${target_dir}/.agents" "${target_dir}/.storybook"; do
     if [[ -d "$managed_root" ]]; then
       find "$managed_root" -type d -empty -delete 2>/dev/null || true
     fi

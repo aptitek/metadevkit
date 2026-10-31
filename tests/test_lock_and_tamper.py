@@ -80,6 +80,7 @@ class LockAndTamperTests(unittest.TestCase):
             lock_initial = (proj_a / ".guardrails.lock").read_text(encoding="utf-8")
 
             ws.run_cmd(["task", "guard:sync"], cwd=proj_a)
+            ws.run_cmd(["task", "guard:sign"], cwd=proj_a)
             self.assertEqual((proj_a / ".guardrails.lock").read_text(encoding="utf-8"), lock_initial)
 
             ws.init_project(proj_b, "testing-fortress,design-system,react-router,ts")

@@ -18,7 +18,25 @@ tasks:
   guard:sync:
     desc: "Synchronize configurations, Taskfiles, and AST rules from the master source"
     cmds:
-      - bash ./.guardrails/scripts/guardrails-cli.sh sync --target "."
+      - |
+        if [ -f ./modules/core/files/.guardrails/scripts/guardrails-cli.sh ]; then
+          bash ./modules/core/files/.guardrails/scripts/guardrails-cli.sh sync --target "."
+        else
+          bash ./.guardrails/scripts/guardrails-cli.sh sync --target "."
+        fi
+
+  guard:sign:
+    desc: "Synchronize master modules (if in devkit) and sign/regenerate .guardrails.lock SHA-256 checksums"
+    aliases: [guard:lock]
+    cmds:
+      - |
+        if [ -f ./modules/core/files/.guardrails/scripts/guardrails-cli.sh ]; then
+          bash ./modules/core/files/.guardrails/scripts/guardrails-cli.sh sync --target "."
+          bash ./modules/core/files/.guardrails/scripts/guardrails-cli.sh lock --target "."
+        else
+          bash ./.guardrails/scripts/guardrails-cli.sh lock --target "."
+        fi
+      - task: guard:check
 
   feature:add:
     desc: "Add a hierarchical or orthogonal module (e.g. task feature:add -- cloudflare)"

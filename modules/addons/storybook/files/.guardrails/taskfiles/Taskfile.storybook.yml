@@ -5,11 +5,26 @@
 version: '3'
 
 tasks:
-  lint:
-    desc: "Verify 100% CSF3 .stories.tsx component coverage"
+  dev:
+    desc: "Start Storybook development server on port 6006"
     cmds:
       - |
+        if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm exec storybook dev -p 6006
+        else
+          echo "[STORYBOOK DEV ERROR] Missing package.json or pnpm binary." >&2
+          exit 1
+        fi
+
+  lint:
+    desc: "Verify .storybook/main.ts and 100% CSF3 .stories.tsx component coverage"
+    cmds:
+      - |
+        if [ ! -f .storybook/main.ts ] && [ ! -f .storybook/main.js ]; then
+          echo "[STORYBOOK ERROR] Missing .storybook/main.ts configuration file." >&2
+          exit 1
+        fi
         if command -v node >/dev/null 2>&1; then
           node ./.guardrails/scripts/lint-storybook-coverage.mjs
         fi
-        echo "[addon:storybook] Verified CSF3 .stories.tsx coverage."
+        echo "[addon:storybook] Verified .storybook/main.ts and CSF3 .stories.tsx coverage."

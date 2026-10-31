@@ -1,0 +1,9 @@
+{
+  "entry": [
+    ".storybook/main.{ts,tsx}",
+    ".storybook/preview.{ts,tsx}",
+    "src/**/*.stories.{ts,tsx}",
+    "app/**/*.stories.{ts,tsx}",
+    "simulations/**/*.stories.{ts,tsx}"
+  ]
+}

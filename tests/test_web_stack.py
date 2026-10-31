@@ -78,6 +78,8 @@ class WebStackTests(unittest.TestCase):
             self.assertIn("addon:ui-guardrails", active)
             self.assertEqual(len(active), 11)
             self.assertTrue((proj / ".guardrails" / "paths.json").is_file())
+            self.assertTrue((proj / ".storybook" / "main.ts").is_file())
+            self.assertTrue((proj / ".storybook" / "preview.ts").is_file())
 
             atoms_dir = proj / "src" / "components" / "atoms"
             atoms_dir.mkdir(parents=True, exist_ok=True)

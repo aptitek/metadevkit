@@ -82,6 +82,7 @@ Toutes les opérations du cycle de vie s'exécutent via `task` (`go-task`) avec 
 | `task feature:add -- <mod>` | Guardrails | Ajoute un module ou addon à chaud au projet (ex: `task feature:add -- docker`) |
 | `task guard:check` | Guardrails | Vérifie l'intégrité cryptographique SHA-256 de tous les fichiers verrouillés (`.guardrails.lock`) |
 | `task guard:sync` | Guardrails | Recompile le VFS et resynchronise les configurations depuis la source maître |
+| `task guard:sign` / `task guard:lock` | Guardrails | Synchronise les modules maîtres (si dans le devkit) et signe/régénère les sommes SHA-256 de `.guardrails.lock` |
 | `task check:quick` | Tier 1 (< 3s) | Boucle rapide inner-loop : `guard:check` + `ast:check` + `lint` |
 | `task test:quick` | Tier 1 (< 3s) | Exécution rapide des tests unitaires |
 | `task check:commit` | Tier 2 (< 10s) | Gate de pré-commit : `guard:check` + `lint` + `complexity` + `test` |
