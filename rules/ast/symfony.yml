@@ -1,0 +1,33 @@
+# =============================================================================
+# symfony.yml — Symfony 7.x+ Architectural & Security Semgrep AST Rules
+# Enforces thin controllers, constructor autowiring, and SQL/DQL parameterization.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: symfony-no-entity-manager-in-controller
+    patterns:
+      - pattern-either:
+          - pattern: $EM->persist(...)
+          - pattern: $EM->flush(...)
+          - pattern: $EM->remove(...)
+          - pattern: $EM->createQueryBuilder(...)
+    paths:
+      include:
+        - "src/Controller/**"
+    message: >
+      [SYMFONY ARCHITECTURE] Direct EntityManager operations (persist, flush,
+      remove, createQueryBuilder) are forbidden in src/Controller/. Delegate to
+      an Application Service or Messenger Handler.
+    languages: [php]
+    severity: ERROR
+
+  - id: symfony-no-service-locator-in-controller
+    pattern: $this->container->get(...)
+    paths:
+      include:
+        - "src/Controller/**"
+    message: >
+      [SYMFONY DI GATE] Service locator ($this->container->get()) is forbidden.
+      Use constructor or action method autowiring.
+    languages: [php]
+    severity: ERROR

@@ -49,6 +49,8 @@ normalize_module_id() {
     nicegui|fw:nicegui) echo "fw:nicegui" ;;
     langchain|langgraph|fw:langchain|addon:langchain|addons:langchain) echo "fw:langchain" ;;
     jupyter|jupiter|fw:jupyter|fw:jupiter|addon:jupyter|addons:jupyter) echo "fw:jupyter" ;;
+    symfony|symphony|fw:symfony|fw:symphony) echo "fw:symfony" ;;
+    django|fw:django) echo "fw:django" ;;
     devkit|meta-devkit|guardrails|addon:devkit|addons:devkit|fw:devkit) echo "addon:devkit" ;;
     cloudflare|addon:cloudflare|addons:cloudflare) echo "addon:cloudflare" ;;
     design-system|addon:design-system|addons:design-system) echo "addon:design-system" ;;
@@ -176,6 +178,8 @@ generate_lockfile() {
     "pint.json"
     "phpstan.neon.dist"
     "infection.json5"
+    "deptrac.yaml"
+    ".djlintrc"
   )
 
   local -a existing_files=()

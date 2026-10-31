@@ -56,6 +56,12 @@ includes:
   jupyter:
     taskfile: ./.guardrails/taskfiles/Taskfile.jupyter.yml
     optional: true
+  symfony:
+    taskfile: ./.guardrails/taskfiles/Taskfile.symfony.yml
+    optional: true
+  django:
+    taskfile: ./.guardrails/taskfiles/Taskfile.django.yml
+    optional: true
   devkit:
     taskfile: ./.guardrails/taskfiles/Taskfile.devkit.yml
     optional: true

@@ -1,0 +1,78 @@
+# =============================================================================
+# Taskfile.django.yml — Django 5.x+ Framework Tasks (fw:django)
+# Tools: uv, django-upgrade, djlint (.djlintrc), django-stubs (mypy), pytest-django
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Start Django development server via uv"
+    cmds:
+      - |
+        if [ -f manage.py ] && command -v uv >/dev/null 2>&1; then
+          uv run python manage.py runserver
+        fi
+
+  format:
+    desc: "Modernize Django syntax with django-upgrade and format HTML templates with djLint"
+    cmds:
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          if uv run django-upgrade --version >/dev/null 2>&1 && [ -d src ]; then
+            find src -type f -name "*.py" -exec uv run django-upgrade --target-version 5.1 {} + || true
+          fi
+          if uv run djlint --version >/dev/null 2>&1 && [ -d templates ]; then
+            uv run djlint templates/ --configuration=.djlintrc --reformat
+          fi
+        fi
+
+  lint:
+    desc: "Run Django Services/Selectors gate, djLint template check, and migration drift check"
+    cmds:
+      - bash .guardrails/scripts/validate-django.sh .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          if uv run djlint --version >/dev/null 2>&1 && [ -d templates ]; then
+            uv run djlint templates/ --configuration=.djlintrc --lint --check
+          fi
+          if [ -f manage.py ] && uv run python -c "import django" >/dev/null 2>&1; then
+            uv run python manage.py makemigrations --check --dry-run
+          fi
+        fi
+
+  typecheck:
+    desc: "Verify Django architecture and strict django-stubs MyPy types"
+    cmds:
+      - bash .guardrails/scripts/validate-django.sh .
+
+  a11y:
+    desc: "Verify Django HTML template WCAG 2.2 AA accessibility (alt attributes, tabindex, djLint)"
+    cmds:
+      - bash .guardrails/scripts/validate-django.sh .
+      - |
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run djlint --version >/dev/null 2>&1 && [ -d templates ]; then
+          uv run djlint templates/ --configuration=.djlintrc --lint
+        fi
+
+  i18n:
+    desc: "Verify Django locale parity and template translation strings"
+    cmds:
+      - bash .guardrails/scripts/validate-i18n-and-a11y.sh --i18n .
+
+  sec:
+    desc: "Verify Django settings hardening, SQLi/XSS gates, and manage.py check --deploy"
+    cmds:
+      - bash .guardrails/scripts/validate-django.sh .
+
+  test:
+    desc: "Run Django test suite via pytest-django (--reuse-db)"
+    cmds:
+      - bash .guardrails/scripts/validate-django.sh .
+      - |
+        if [ "${GUARDRAILS_SKIP_SELFTEST:-0}" = "1" ]; then
+          exit 0
+        fi
+        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
+          uv run pytest
+        fi

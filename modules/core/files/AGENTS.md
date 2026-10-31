@@ -31,7 +31,7 @@ You MUST interact with the repository **exclusively** through the universal `tas
 All configuration files tracked in `.guardrails.lock` in child projects are cryptographically locked via SHA-256 checksums:
 - `Taskfile.yml`, `mise.toml`, `lefthook.yml`, `.jscpd.json`, `commitlint.config.mjs`, `.secretlintrc.json`, `AGENTS.md`
 - `eslint.config.mjs`, `tsconfig.base.json`, `knip.json`, `vitest.config.ts`, `.dependency-cruiser.cjs`, `.prettierrc.mjs`, `.size-limit.json`
-- `panda.config.ts`, `stryker.config.mjs`, `playwright.config.ts`, `.remarkrc.mjs`, `drizzle.config.ts`, `ruff.toml`, `detekt.yml`, `pint.json`, `phpstan.neon.dist`, `infection.json5`
+- `panda.config.ts`, `stryker.config.mjs`, `playwright.config.ts`, `.remarkrc.mjs`, `drizzle.config.ts`, `ruff.toml`, `.djlintrc`, `detekt.yml`, `pint.json`, `phpstan.neon.dist`, `infection.json5`, `deptrac.yaml`
 - Everything inside `.guardrails/**` and `.agents/**`
 
 ---
@@ -53,6 +53,9 @@ All configuration files tracked in `.guardrails.lock` in child projects are cryp
    - **`fw:nicegui`**: Non-blocking async event-loop gates (bans `time.sleep` and synchronous `requests.*` in `src/`; requires `asyncio.sleep`, `httpx.AsyncClient`, `run.io_bound`, or `run.cpu_bound`), Atomic UI hierarchy, and `nicegui.testing.User` verification.
    - **`fw:langchain`**: Modern LCEL (`prompt | llm`) and LangGraph (`StateGraph`) only (bans deprecated `LLMChain`, `SequentialChain`, `initialize_agent`), `SecretStr` API key hygiene, and 100% mocked external LLM/TTS/MCP calls in `tests/`.
    - **`fw:jupyter` (`jupiter`)**: Valid `nbformat >= 4` `.ipynb` JSON, Clean Output Gate (`outputs: []` and `execution_count: null` enforced by `task lint` and auto-stripped by `task format`), zero in-cell `!pip`/`%pip`/`%conda` installs, max 30 lines per code cell, and `pytest --nbmake`.
+   - **`fw:django`**: HackSoft Services/Selectors ("Fat-Free Views": zero `.objects.create`/`update`/`delete` or `transaction.atomic` in `views.py`), Ruff `flake8-django` (`DJ001`/`DJ008`/`DJ012`), `.djlintrc` template formatting & WCAG 2.2 AA a11y, `django-stubs` strict MyPy, zero `.raw()`/`.extra()`/`mark_safe()`/`|safe`, and settings secret hardening.
+9. **PHP & Symfony 7.x+ Gates (`lang:php`, `fw:symfony` / `symphony`)**:
+   - Mandatory `declare(strict_types=1);` in every `.php` file, Laravel Pint, PHPStan (`level: max` + `phpstan-symfony` + `phpstan-doctrine`), **Deptrac** Hexagonal layers (`deptrac.yaml`: `Domain` has zero `Doctrine\*`/`Symfony\*` imports; `Controller` has zero `EntityManager` or `$this->container->get()`), Twig-CS-Fixer + Twig XSS (`|raw` banned) & WCAG 2.2 AA a11y, Pest `>= 85%` coverage, and Infection PHP `>= 85%` MSI.
 
 ---
 

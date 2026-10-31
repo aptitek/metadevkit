@@ -1,0 +1,83 @@
+# =============================================================================
+# Taskfile.symfony.yml — Symfony 7.x+ Framework Tasks (fw:symfony)
+# Tools: deptrac, twig-cs-fixer, bin/console (lint:container, lint:yaml, lint:twig)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  dev:
+    desc: "Start Symfony development server"
+    cmds:
+      - |
+        if [ -x ./bin/console ] && command -v symfony >/dev/null 2>&1; then
+          symfony server:start
+        elif [ -x ./bin/console ] && command -v php >/dev/null 2>&1; then
+          php -S 127.0.0.1:8000 -t public
+        fi
+
+  format:
+    desc: "Format Twig templates using Twig-CS-Fixer"
+    cmds:
+      - |
+        if [ -x ./vendor/bin/twig-cs-fixer ] && [ -d templates ]; then
+          ./vendor/bin/twig-cs-fixer lint --fix templates/
+        fi
+
+  lint:
+    desc: "Run Symfony Deptrac boundaries, Twig-CS-Fixer, and container/YAML/Twig linters"
+    cmds:
+      - bash .guardrails/scripts/validate-symfony.sh .
+      - |
+        if [ -x ./vendor/bin/deptrac ]; then
+          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml
+        fi
+        if [ -x ./vendor/bin/twig-cs-fixer ] && [ -d templates ]; then
+          ./vendor/bin/twig-cs-fixer lint templates/
+        fi
+        if [ -f ./bin/console ] && command -v php >/dev/null 2>&1 && [ -d ./vendor ]; then
+          php ./bin/console lint:container --env=test
+          if [ -d config ]; then
+            php ./bin/console lint:yaml config --parse-tags
+          fi
+          if [ -d templates ]; then
+            php ./bin/console lint:twig templates
+          fi
+        fi
+
+  typecheck:
+    desc: "Verify Symfony DI container types, Deptrac layers, and PHPStan Symfony/Doctrine rules"
+    cmds:
+      - bash .guardrails/scripts/validate-symfony.sh .
+      - |
+        if [ -x ./vendor/bin/deptrac ]; then
+          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml
+        fi
+        if [ -f ./bin/console ] && command -v php >/dev/null 2>&1 && [ -d ./vendor ]; then
+          php ./bin/console lint:container --env=test
+        fi
+
+  a11y:
+    desc: "Verify Twig template WCAG 2.2 AA accessibility (alt attributes, tabindex)"
+    cmds:
+      - bash .guardrails/scripts/validate-symfony.sh .
+
+  i18n:
+    desc: "Verify Symfony translations YAML/XLIFF integrity and locale parity"
+    cmds:
+      - bash .guardrails/scripts/validate-i18n-and-a11y.sh --i18n .
+      - |
+        if [ -f ./bin/console ] && command -v php >/dev/null 2>&1 && [ -d ./vendor ] && [ -d translations ]; then
+          php ./bin/console lint:yaml translations
+        fi
+
+  test:
+    desc: "Run Symfony test suite (Pest / PHPUnit WebTestCase & KernelTestCase)"
+    cmds:
+      - bash .guardrails/scripts/validate-symfony.sh .
+      - |
+        if [ -x ./vendor/bin/pest ]; then
+          ./vendor/bin/pest --coverage --min=85
+        elif [ -x ./bin/phpunit ]; then
+          php ./bin/phpunit
+        fi

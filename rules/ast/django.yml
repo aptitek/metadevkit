@@ -1,0 +1,40 @@
+# =============================================================================
+# django.yml — Django 5.x+ Architectural & Security Semgrep AST Rules
+# Enforces SQLi/XSS prevention, settings security, and Fat-Free Views.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: django-no-raw-or-extra-queries
+    patterns:
+      - pattern-either:
+          - pattern: $MODEL.objects.raw(...)
+          - pattern: $QS.extra(...)
+    message: >
+      [DJANGO SECURITY] Raw SQL queries (.raw(), .extra()) are forbidden. Use
+      parameterized Django ORM QuerySet expressions.
+    languages: [python]
+    severity: ERROR
+
+  - id: django-no-mark-safe
+    pattern: mark_safe(...)
+    message: >
+      [DJANGO XSS GATE] mark_safe() is forbidden. Use
+      django.utils.html.format_html() with positional/keyword placeholders.
+    languages: [python]
+    severity: ERROR
+
+  - id: django-no-orm-mutations-in-views
+    patterns:
+      - pattern-either:
+          - pattern: $MODEL.objects.create(...)
+          - pattern: $MODEL.objects.bulk_create(...)
+          - pattern: $QS.update(...)
+          - pattern: $QS.delete(...)
+    paths:
+      include:
+        - "**/*views*.py"
+    message: >
+      [DJANGO ARCHITECTURE] Direct ORM writes (.create, .bulk_create, .update,
+      .delete) inside views are forbidden. Delegate mutations to services.py.
+    languages: [python]
+    severity: ERROR

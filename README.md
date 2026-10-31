@@ -2,7 +2,7 @@
 
 `polyglot-guardrails` is a composable, zero-config-drift meta-framework that enforces **Haskell-grade Architectural Fortress** quality gates across Web, Cloud, JVM / Minecraft Modding, and Python (`uv`) / AI / Jupyter repositories.
 
-## Architecture: 4 Composable Strata (25 Modules)
+## Architecture: 4 Composable Strata (27 Modules)
 
 1. **`core` (Mandatory Universal Foundation)**:
    - `mise.toml`: `go-task`, `lefthook`, `jscpd` (`0%` duplication tolerance), `lizard`, `trivy`, `semgrep`, `copier`
@@ -25,6 +25,8 @@
    - `fw:nicegui` (Depends on `lang:python`: NiceGUI FastAPI/Vue reactive UI with `uv`, non-blocking async event-loop gates banning `time.sleep` and sync `requests.*`, Atomic UI structure, and `nicegui.testing.User` headless testing)
    - `fw:langchain` (Depends on `lang:python`: LangChain LCEL + LangGraph `StateGraph` + `langchain-google-genai` + MCP `mcp` + Google Cloud TTS + FFmpeg post-processing, banning legacy `LLMChain`/`initialize_agent` and enforcing `SecretStr` injection & mocked tests)
    - `fw:jupyter` (Depends on `lang:python`, aliased as `jupiter`: Reproducible Jupyter Lab / Notebook stack with `uv`, automatic `.ipynb` cell output stripping via `task format`, Clean Output Gate, zero in-cell `!pip` installs, `<= 30` lines per cell, Ruff native `.ipynb` checks, and `pytest --nbmake`)
+   - `fw:django` (Depends on `lang:python`: Django 5.x+ with `uv`, HackSoft Services/Selectors "Fat-Free Views" architecture, Ruff `flake8-django` `DJ001`/`DJ008`/`DJ012`, `.djlintrc` template formatting & WCAG 2.2 AA a11y, `django-upgrade`, `django-stubs` strict MyPy, SQLi/XSS & settings hardening, and `pytest-django` + `mutmut`)
+   - `fw:symfony` (Depends on `lang:php`, aliased as `symphony`: Symfony 7.x+ Hexagonal Architecture with locked `deptrac.yaml`, thin invokable controllers with `#[MapRequestPayload]`, Twig-CS-Fixer & Twig XSS/WCAG 2.2 AA gates, `bin/console lint:container`/`lint:yaml`/`lint:twig`, PHPStan Symfony+Doctrine `level: max`, and Infection PHP mutation testing)
    - `fw:minecraft` (Depends on `core`, `lang:java`: Client/Server physical side-separation AST & validator rules banning `net.minecraft.client.*` and `com.mojang.blaze3d.*` in `server/` or `common/`, Spongeian Mixin & MixinExtras conflict gates banning `@Overwrite` and `@Redirect`, Mojang GameTest Server harness `runGameTestServer`, and 1.21+ singular resourcepack/datapack validators)
    - `fw:quilt` (Depends on `fw:minecraft`: Quilt Loom `org.quiltmc.loom`, `quilt.mod.json` schema & entrypoint/mixin config verification, `quilt-kotlin-libraries`)
    - `fw:fabric` (Depends on `fw:minecraft`: Fabric Loom `fabric-loom`, `fabric.mod.json` schema & entrypoint/mixin config verification, Fabric API, `fabric-language-kotlin`)

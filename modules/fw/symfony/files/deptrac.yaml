@@ -1,0 +1,59 @@
+# =============================================================================
+# deptrac.yaml — Symfony 7.x+ Hexagonal / Clean Architecture Layer Boundaries
+# Enforces strict dependency direction:
+#   Controller -> Application, Domain
+#   Application -> Domain
+#   Domain -> ~ (pure PHP: zero Symfony, Doctrine, or Infrastructure imports)
+#   Infrastructure -> Application, Domain, Doctrine, Symfony
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*Test\.php$#'
+
+  layers:
+    - name: Controller
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Controller\\#'
+
+    - name: Application
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Application\\#'
+
+    - name: Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\#'
+
+    - name: Infrastructure
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Infrastructure\\#'
+
+    - name: Doctrine
+      collectors:
+        - type: classNameRegex
+          value: '#^Doctrine\\#'
+
+    - name: Symfony
+      collectors:
+        - type: classNameRegex
+          value: '#^Symfony\\#'
+
+  ruleset:
+    Controller:
+      - Application
+      - Domain
+      - Symfony
+    Application:
+      - Domain
+    Domain: ~
+    Infrastructure:
+      - Application
+      - Domain
+      - Doctrine
+      - Symfony
