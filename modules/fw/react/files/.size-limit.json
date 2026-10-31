@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Static HTML & Assets Bundle Budget",
+    "path": "dist/**/*.{html,js,css}",
+    "limit": "150 kB"
+  }
+]

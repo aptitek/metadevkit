@@ -60,8 +60,8 @@ normalize_module_id() {
     flet|fw:flet) echo "fw:flet" ;;
     nicegui|fw:nicegui) echo "fw:nicegui" ;;
     langchain|langgraph|fw:langchain|addon:langchain|addons:langchain) echo "fw:langchain" ;;
-    jupyter|jupiter|fw:jupyter|fw:jupiter|addon:jupyter|addons:jupyter) echo "fw:jupyter" ;;
-    symfony|symphony|fw:symfony|fw:symphony) echo "fw:symfony" ;;
+    jupyter|fw:jupyter|addon:jupyter|addons:jupyter) echo "fw:jupyter" ;;
+    symfony|fw:symfony) echo "fw:symfony" ;;
     django|fw:django) echo "fw:django" ;;
     devkit|meta-devkit|guardrails|addon:devkit|addons:devkit|fw:devkit) echo "addon:devkit" ;;
     docker|addon:docker|addons:docker) echo "addon:docker" ;;
@@ -248,6 +248,7 @@ apply_modules() {
   # Unlinking .guardrails/scripts/* first ensures running scripts keep their old FD cleanly.
   rm -rf \
     "${target_dir}/.guardrails/ast" \
+    "${target_dir}/.guardrails/depcruise" \
     "${target_dir}/.guardrails/eslint" \
     "${target_dir}/.guardrails/java" \
     "${target_dir}/.guardrails/kotlin" \
@@ -270,7 +271,13 @@ apply_modules() {
       "${target_dir}/stryker.config.mjs" \
       "${target_dir}/commitlint.config.mjs" \
       "${target_dir}/.secretlintrc.json" \
-      "${target_dir}/.jscpd.json"
+      "${target_dir}/.jscpd.json" \
+      "${target_dir}/.size-limit.json"
+  fi
+
+  # Remove .size-limit.json if neither fw:react nor fw:astro is active
+  if ! printf '%s\n' "${active_modules[@]}" | grep -qxE "fw:(react|astro)"; then
+    rm -f "${target_dir}/.size-limit.json"
   fi
 
   # Compose mise.toml header
@@ -293,14 +300,16 @@ apply_modules() {
     echo "# ============================================================================="
   } > "$gitignore_file"
 
+  # Initialize dynamic AGENTS.md
+  local agents_file="${target_dir}/AGENTS.md"
+  : > "$agents_file"
+
   local has_ts=0
   if printf '%s\n' "${active_modules[@]}" | grep -qx "lang:ts"; then
     has_ts=1
   fi
 
-  local needs_ui_validator=0
-
-  # Copy files, mise fragments, and gitignore fragments ONLY for active modules in dependency order
+  # Copy files, mise fragments, gitignore fragments, and AGENTS fragments ONLY for active modules
   for mod_id in "${active_modules[@]}"; do
     local rel_dir
     rel_dir="$(module_rel_dir "$mod_id")"
@@ -316,6 +325,13 @@ apply_modules() {
       cat "${mod_path}/gitignore.fragment" >> "$gitignore_file"
     fi
 
+    if [[ -f "${mod_path}/AGENTS.fragment.md" ]]; then
+      if [[ -s "$agents_file" ]]; then
+        echo "" >> "$agents_file"
+      fi
+      cat "${mod_path}/AGENTS.fragment.md" >> "$agents_file"
+    fi
+
     if [[ -d "${mod_path}/files" ]]; then
       cp -R "${mod_path}/files/." "${target_dir}/"
     fi
@@ -324,24 +340,41 @@ apply_modules() {
     if [[ "${mod_id}" == "addon:testing-fortress" && "${has_ts}" -eq 1 && -d "${mod_path}/ts-files" ]]; then
       cp -R "${mod_path}/ts-files/." "${target_dir}/"
     fi
-
-    case "${mod_id}" in
-      fw:react|fw:react-router|fw:astro|fw:flet|fw:nicegui|fw:minecraft|fw:quilt|fw:fabric|fw:symfony|fw:django|addon:ui-guardrails)
-        needs_ui_validator=1
-        ;;
-    esac
   done
-
-  if [[ "${needs_ui_validator}" -eq 1 && ! -f "${target_dir}/.guardrails/scripts/validate-i18n-and-a11y.sh" ]]; then
-    cp "${master_dir}/modules/addons/ui-guardrails/files/.guardrails/scripts/validate-i18n-and-a11y.sh" \
-      "${target_dir}/.guardrails/scripts/validate-i18n-and-a11y.sh"
-  fi
 
   if [[ -f "${target_dir}/.gitignore.local" ]]; then
     echo "" >> "$gitignore_file"
     echo "# --- Project-specific (.gitignore.local) ---" >> "$gitignore_file"
     cat "${target_dir}/.gitignore.local" >> "$gitignore_file"
   fi
+
+  # Dynamically generate Taskfile.yml for ONLY the active modules
+  local taskfile="${target_dir}/Taskfile.yml"
+  {
+    echo "# ============================================================================="
+    echo "# Taskfile.yml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)"
+    echo "# Active modules: ${active_modules[*]}"
+    echo "# For project-specific tasks or variables, create 'Taskfile.local.yml'."
+    echo "# ============================================================================="
+    echo "version: '3'"
+    echo ""
+    echo "includes:"
+    echo "  base:"
+    echo "    taskfile: ./.guardrails/taskfiles/Taskfile.base.yml"
+    echo "    flatten: true"
+    for mod_id in "${active_modules[@]}"; do
+      [[ "${mod_id}" == "core" ]] && continue
+      local short="${mod_id#*:}"
+      if [[ -f "${target_dir}/.guardrails/taskfiles/Taskfile.${short}.yml" ]]; then
+        echo "  ${short}:"
+        echo "    taskfile: ./.guardrails/taskfiles/Taskfile.${short}.yml"
+        echo "    optional: true"
+      fi
+    done
+    echo "  local:"
+    echo "    taskfile: ./Taskfile.local.yml"
+    echo "    optional: true"
+  } > "$taskfile"
 
   chmod +x "${target_dir}/.guardrails/scripts/"*.sh 2>/dev/null || true
 

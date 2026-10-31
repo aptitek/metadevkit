@@ -23,13 +23,11 @@ select = [
   "PL",  # Pylint (structural limits & code smells)
   "RUF", # Ruff-specific rules
   "S",   # flake8-bandit security rules
-  "DJ",  # flake8-django rules (DJ001, DJ008, DJ012)
 ]
 ignore = []
 
 [lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "PLR2004"]
-"*/migrations/*.py" = ["DJ001", "E501"]
+"tests/**/*.py" = ["S101", "PLR2004", "S603"]
 
 [lint.mccabe]
 # Strict cyclomatic complexity threshold

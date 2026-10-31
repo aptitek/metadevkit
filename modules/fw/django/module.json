@@ -1,6 +1,6 @@
 {
   "id": "fw:django",
   "layer": "fw",
-  "depends_on": ["core", "lang:python"],
+  "depends_on": ["core", "lang:python", "addon:ui-guardrails"],
   "description": "Django 5.x+ Enterprise Architecture Fortress (uv): HackSoft Services/Selectors pattern (Fat-Free Views), Ruff flake8-django (DJ001/DJ008/DJ012), djLint template formatting & WCAG 2.2 AA a11y, django-stubs strict MyPy, SQLi/XSS gates, and pytest-django + mutmut"
 }

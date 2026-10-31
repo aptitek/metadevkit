@@ -73,6 +73,13 @@ if [[ -d "${ROOT_DIR}/modules" ]]; then
       fi
     done < <(jq -r '.depends_on[]?' "${mod_json}")
   done < <(find "${ROOT_DIR}/modules" -type f -name "module.json" -print0)
+
+  while IFS= read -r -d '' mise_frag; do
+    if grep -E -q '=\s*"latest"' "${mise_frag}"; then
+      echo "❌ [DEVKIT MISE PIN GATE] ${mise_frag}: Unpinned '\"latest\"' version is forbidden. Pin all tool versions to major.minor." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
+  done < <(find "${ROOT_DIR}/modules" -type f -name "mise.fragment.toml" -print0)
 fi
 
 # 3. Validate all colocated & active AST YAML rule files

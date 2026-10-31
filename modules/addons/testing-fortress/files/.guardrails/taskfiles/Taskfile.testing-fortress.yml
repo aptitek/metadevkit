@@ -21,10 +21,9 @@ tasks:
     desc: "Verify cross-language mutation testing configuration (StrykerJS / mutmut / PITest / Infection)"
     cmds:
       - |
-        if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
-          pnpm exec stryker run stryker.config.mjs
-        else
-          echo "[addon:testing-fortress] Verified polyglot mutation testing gate (stryker.config.mjs, break: 95%)."
+        if [ ! -f stryker.config.mjs ] && [ ! -f .guardrails/python/mutmut.toml ] && [ ! -f .guardrails/java/pitest.gradle.kts ] && [ ! -f .guardrails/kotlin/pitest-kotlin.gradle.kts ] && [ ! -f infection.json5 ]; then
+          echo "[TESTING FORTRESS ERROR] No language mutation configuration found." >&2
+          exit 1
         fi
 
   mutation:
@@ -38,6 +37,9 @@ tasks:
       - |
         if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1 && [ -d e2e ]; then
           pnpm exec playwright test
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[addon:testing-fortress] Fixture mode: verified playwright.config.ts."
         else
-          echo "[addon:testing-fortress] Verified playwright.config.ts."
+          echo "[E2E ERROR] Missing package.json, node_modules/, pnpm, or e2e/ directory (fail-closed)." >&2
+          exit 1
         fi

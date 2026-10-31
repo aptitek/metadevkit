@@ -1,0 +1,3 @@
+### `lang:python` — Python 3.12+ Geranium Quality Fortress (`uv`)
+- **Locked Configs**: `ruff.toml`, `.guardrails/python/coverage.toml`, `.guardrails/python/mutmut.toml`.
+- **Toolchain & Modularity**: Exclusive `uv` package management (`Pipfile`/`poetry.lock`/`setup.py` forbidden), max **256 lines** per `.py` file, Ruff McCabe `max-complexity = 8`, Pylint `max-statements = 20`, `max-args = 5`, `max-branches = 8`, `max-returns = 4`, strict `mypy` (zero `Any` in `src/`), zero raw `print()` in `src/`, zero vague variable names (`data`, `res`, `temp`, `info`) in `src/`, `>= 90%` branch coverage, and `mutmut >= 90%` mutation score.

@@ -1,6 +1,6 @@
 ---
 name: symfony-expert
-description: Build and audit Symfony 7.x+ applications (fw:symfony / symphony) enforcing Deptrac Hexagonal layers (deptrac.yaml), thin invokable controllers, #[MapRequestPayload] DTOs, Twig-CS-Fixer & WCAG 2.2 AA gates, PHPStan Symfony+Doctrine level max, and Infection mutation testing.
+description: Build and audit Symfony 7.x+ applications (fw:symfony) enforcing Deptrac Hexagonal layers (deptrac.yaml), thin invokable controllers, #[MapRequestPayload] DTOs, Twig-CS-Fixer & WCAG 2.2 AA gates, PHPStan Symfony+Doctrine level max, and Infection mutation testing.
 ---
 
 # Symfony 7.x+ Enterprise Craftsmanship (`fw:symfony`)

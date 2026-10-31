@@ -16,22 +16,28 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 class RepoTestWorkspace:
     """Isolated temporary workspace with `task` binary wired into PATH."""
 
-    def __init__(self) -> None:
+    def __init__(self, fixture_mode: bool = True) -> None:
         self._tmp_dir = Path(tempfile.mkdtemp(prefix="guardrails-test-"))
         self.bin_dir = self._tmp_dir / ".bin"
         self.bin_dir.mkdir(parents=True, exist_ok=True)
         self._env = dict(os.environ)
-        self._setup_task_binary()
+        self._setup_task_binary(fixture_mode=fixture_mode)
 
-    def _setup_task_binary(self) -> None:
+    def _setup_task_binary(self, fixture_mode: bool) -> None:
         task_bin = shutil.which("task") or shutil.which("go-task")
         if not task_bin:
             raise RuntimeError("Neither 'task' nor 'go-task' found in PATH.")
         symlink_path = self.bin_dir / "task"
         if not symlink_path.exists():
             symlink_path.symlink_to(Path(task_bin))
-        self._env["PATH"] = f"{self.bin_dir}:{self._env.get('PATH', '')}"
+        shared_env = Path(tempfile.gettempdir()) / "polyglot-guardrails-env"
+        shims = f"{shared_env / 'mise-data' / 'shims'}:{shared_env / 'bin'}"
+        self._env["PATH"] = f"{self.bin_dir}:{shims}:{self._env.get('PATH', '')}"
+        self._env["UV_CACHE_DIR"] = str(shared_env / "uv-cache")
+        self._env["UV_PYTHON"] = "/usr/bin/python3"
+        self._env["UV_LINK_MODE"] = "copy"
         self._env["GUARDRAILS_SKIP_SELFTEST"] = "1"
+        self._env["GUARDRAILS_FIXTURE_MODE"] = "1" if fixture_mode else "0"
 
     @property
     def root(self) -> Path:

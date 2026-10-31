@@ -1,5 +1,6 @@
 # =============================================================================
 # Taskfile.yml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# Active modules: core lang:python lang:shell addon:devkit
 # For project-specific tasks or variables, create 'Taskfile.local.yml'.
 # =============================================================================
 version: '3'
@@ -8,92 +9,14 @@ includes:
   base:
     taskfile: ./.guardrails/taskfiles/Taskfile.base.yml
     flatten: true
-  ts:
-    taskfile: ./.guardrails/taskfiles/Taskfile.ts.yml
-    optional: true
   python:
     taskfile: ./.guardrails/taskfiles/Taskfile.python.yml
-    optional: true
-  java:
-    taskfile: ./.guardrails/taskfiles/Taskfile.java.yml
-    optional: true
-  kotlin:
-    taskfile: ./.guardrails/taskfiles/Taskfile.kotlin.yml
-    optional: true
-  php:
-    taskfile: ./.guardrails/taskfiles/Taskfile.php.yml
     optional: true
   shell:
     taskfile: ./.guardrails/taskfiles/Taskfile.shell.yml
     optional: true
-  react:
-    taskfile: ./.guardrails/taskfiles/Taskfile.react.yml
-    optional: true
-  react-router:
-    taskfile: ./.guardrails/taskfiles/Taskfile.react-router.yml
-    optional: true
-  astro:
-    taskfile: ./.guardrails/taskfiles/Taskfile.astro.yml
-    optional: true
-  minecraft:
-    taskfile: ./.guardrails/taskfiles/Taskfile.minecraft.yml
-    optional: true
-  quilt:
-    taskfile: ./.guardrails/taskfiles/Taskfile.quilt.yml
-    optional: true
-  fabric:
-    taskfile: ./.guardrails/taskfiles/Taskfile.fabric.yml
-    optional: true
-  flet:
-    taskfile: ./.guardrails/taskfiles/Taskfile.flet.yml
-    optional: true
-  nicegui:
-    taskfile: ./.guardrails/taskfiles/Taskfile.nicegui.yml
-    optional: true
-  langchain:
-    taskfile: ./.guardrails/taskfiles/Taskfile.langchain.yml
-    optional: true
-  jupyter:
-    taskfile: ./.guardrails/taskfiles/Taskfile.jupyter.yml
-    optional: true
-  symfony:
-    taskfile: ./.guardrails/taskfiles/Taskfile.symfony.yml
-    optional: true
-  django:
-    taskfile: ./.guardrails/taskfiles/Taskfile.django.yml
-    optional: true
   devkit:
     taskfile: ./.guardrails/taskfiles/Taskfile.devkit.yml
-    optional: true
-  docker:
-    taskfile: ./.guardrails/taskfiles/Taskfile.docker.yml
-    optional: true
-  ffmpeg:
-    taskfile: ./.guardrails/taskfiles/Taskfile.ffmpeg.yml
-    optional: true
-  ui-guardrails:
-    taskfile: ./.guardrails/taskfiles/Taskfile.ui-guardrails.yml
-    optional: true
-  cloudflare:
-    taskfile: ./.guardrails/taskfiles/Taskfile.cloudflare.yml
-    optional: true
-  design-system:
-    taskfile: ./.guardrails/taskfiles/Taskfile.design-system.yml
-    optional: true
-  testing-fortress:
-    taskfile: ./.guardrails/taskfiles/Taskfile.testing-fortress.yml
-    optional: true
-  storybook:
-    taskfile: ./.guardrails/taskfiles/Taskfile.storybook.yml
-    optional: true
-  content-md:
-    taskfile: ./.guardrails/taskfiles/Taskfile.content-md.yml
-    optional: true
-  drizzle-d1:
-    taskfile: ./.guardrails/taskfiles/Taskfile.drizzle-d1.yml
-    optional: true
-  lib-exports:
-    taskfile: ./.guardrails/taskfiles/Taskfile.lib-exports.yml
     optional: true
   local:
     taskfile: ./Taskfile.local.yml

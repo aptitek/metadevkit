@@ -1,6 +1,6 @@
 # =============================================================================
 # Taskfile.kotlin.yml — Kotlin 2.x (K2) Module Tasks (lang:kotlin)
-# Tools: gradle, detekt (detekt-formatting, maxIssues: 0), kotest, jacoco
+# Tools: gradle, detekt (detekt-formatting, maxIssues: 0), kotest, jacoco, pitest
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 version: '3'
@@ -57,6 +57,11 @@ tasks:
           if ./gradlew tasks --all 2>/dev/null | grep -q "detekt"; then
             ./gradlew detekt --build-cache --configuration-cache --parallel --console=plain
           fi
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:kotlin] Fixture mode: verified detekt.yml and Kotlin AST rules."
+        else
+          echo "[KOTLIN LINT ERROR] Missing build.gradle.kts or ./gradlew executable (fail-closed)." >&2
+          exit 1
         fi
 
   test:
@@ -68,6 +73,11 @@ tasks:
           if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestReport"; then
             ./gradlew jacocoTestReport --build-cache --configuration-cache --parallel --console=plain
           fi
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:kotlin] Fixture mode: verified Kotest & JaCoCo test gate."
+        else
+          echo "[KOTLIN TEST ERROR] Missing build.gradle.kts or ./gradlew executable (fail-closed)." >&2
+          exit 1
         fi
 
   typecheck:
@@ -79,9 +89,12 @@ tasks:
           exit 1
         fi
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
-          ./gradlew compileKotlin compileTestKotlin --console=plain
+          ./gradlew compileKotlin compileTestKotlin --build-cache --configuration-cache --parallel --console=plain
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:kotlin] Fixture mode: verified Kotlin K2 strict typecheck & Detekt type-resolution gates."
         else
-          echo "[lang:kotlin] Verified Kotlin K2 strict typecheck & Detekt type-resolution gates."
+          echo "[KOTLIN TYPECHECK ERROR] Missing build.gradle.kts or ./gradlew executable (fail-closed)." >&2
+          exit 1
         fi
 
   coverage:
@@ -89,11 +102,12 @@ tasks:
     cmds:
       - |
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
-          if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestCoverageVerification"; then
-            ./gradlew test jacocoTestReport jacocoTestCoverageVerification --console=plain
-          fi
+          ./gradlew test jacocoTestReport jacocoTestCoverageVerification --build-cache --configuration-cache --parallel --console=plain
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:kotlin] Fixture mode: verified JaCoCo coverage gate (>= 85% line/branch coverage)."
         else
-          echo "[lang:kotlin] Verified JaCoCo coverage gate (>= 85% line/branch coverage)."
+          echo "[KOTLIN COVERAGE ERROR] Missing build.gradle.kts or ./gradlew executable (fail-closed)." >&2
+          exit 1
         fi
 
   mutate:
@@ -105,9 +119,10 @@ tasks:
           exit 1
         fi
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
-          if ./gradlew tasks --all 2>/dev/null | grep -q "pitest"; then
-            ./gradlew pitest --console=plain
-          fi
+          ./gradlew pitest --console=plain
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:kotlin] Fixture mode: verified .guardrails/kotlin/pitest-kotlin.gradle.kts (PITest 1.30.0 + Arcmutate >= 85% threshold)."
         else
-          echo "[lang:kotlin] Verified .guardrails/kotlin/pitest-kotlin.gradle.kts (PITest 1.30.0 + Arcmutate >= 85% threshold)."
+          echo "[KOTLIN MUTATE ERROR] Missing build.gradle.kts or ./gradlew executable (fail-closed)." >&2
+          exit 1
         fi

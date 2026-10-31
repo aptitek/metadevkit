@@ -3,7 +3,7 @@ name: jupyter-expert
 description: "Manage reproducible Jupyter (.ipynb) notebooks with uv, Ruff native lint/format, output stripping, <=30 lines/cell, and pytest --nbmake."
 ---
 
-# Reproducible Jupyter Notebooks with `uv` (`fw:jupyter` / `jupiter`)
+# Reproducible Jupyter Notebooks with `uv` (`fw:jupyter`)
 
 ## 1. Hard Notebook Quality Gates (`validate-jupyter.sh` + `jupyter.yml`)
 | Gate | Requirement | Enforcement |

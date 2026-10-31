@@ -1,6 +1,6 @@
 # =============================================================================
 # Taskfile.ts.yml — TypeScript Module Tasks (lang:ts)
-# Tools: pnpm, tsc, eslint, prettier, knip, dependency-cruiser, size-limit, vitest
+# Tools: pnpm, tsc, eslint, prettier, knip, dependency-cruiser, vitest
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 version: '3'
@@ -20,6 +20,9 @@ tasks:
       - |
         if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
           pnpm run dev
+        else
+          echo "[TS DEV ERROR] Missing package.json or pnpm binary." >&2
+          exit 1
         fi
 
   format:
@@ -57,12 +60,15 @@ tasks:
           if [ -d src ]; then
             pnpm exec depcruise src --config .dependency-cruiser.cjs
           fi
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:ts] Fixture mode: verified tsconfig.base.json, eslint.config.mjs, knip.json, and .dependency-cruiser.cjs"
         else
-          echo "[lang:ts] Verified tsconfig.base.json, eslint.config.mjs, knip.json, and .dependency-cruiser.cjs"
+          echo "[TS LINT ERROR] Missing package.json, node_modules/, or pnpm binary (fail-closed)." >&2
+          exit 1
         fi
 
   sec:
-    desc: "Run pnpm audit and bundle size-limit check"
+    desc: "Run pnpm audit and deprecated dependency check"
     cmds:
       - |
         if command -v node >/dev/null 2>&1; then
@@ -79,8 +85,11 @@ tasks:
       - |
         if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
           pnpm exec vitest run --coverage --config vitest.config.ts
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:ts] Fixture mode: verified vitest.config.ts 95% per-file coverage gates"
         else
-          echo "[lang:ts] Verified vitest.config.ts 95% per-file coverage gates"
+          echo "[TS TEST ERROR] Missing package.json, node_modules/, or pnpm binary (fail-closed)." >&2
+          exit 1
         fi
 
   typecheck:
@@ -92,9 +101,13 @@ tasks:
           exit 1
         fi
         if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
-          pnpm exec tsc --noEmit
+          mkdir -p .cache
+          pnpm exec tsc --noEmit --incremental --tsBuildInfoFile .cache/tsbuildinfo.json
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:ts] Fixture mode: verified strict tsconfig.base.json (noUncheckedIndexedAccess, exactOptionalPropertyTypes)."
         else
-          echo "[lang:ts] Verified strict tsconfig.base.json (noUncheckedIndexedAccess, exactOptionalPropertyTypes)."
+          echo "[TS TYPECHECK ERROR] Missing package.json, node_modules/, or pnpm binary (fail-closed)." >&2
+          exit 1
         fi
 
   coverage:
@@ -108,6 +121,9 @@ tasks:
       - |
         if [ -f package.json ] && [ -d node_modules ] && [ -f stryker.config.mjs ] && command -v pnpm >/dev/null 2>&1; then
           pnpm exec stryker run stryker.config.mjs
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:ts] Fixture mode: mutation testing gate ready (StrykerJS >= 95% threshold)."
         else
-          echo "[lang:ts] Mutation testing gate ready (StrykerJS >= 95% threshold)."
+          echo "[TS MUTATE ERROR] Missing package.json, node_modules/, stryker.config.mjs, or pnpm binary (fail-closed)." >&2
+          exit 1
         fi

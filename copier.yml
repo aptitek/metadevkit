@@ -6,11 +6,13 @@ _min_copier_version: "9.0.0"
 _subdirectory: "."
 _exclude:
   - ".git"
+  - ".cache"
+  - ".task"
   - "copier.yml"
   - "README.md"
   - "modules"
-  - "rules"
   - "scripts"
+  - "tests"
   - "Taskfile.yml"
 
 project_name:
@@ -20,19 +22,20 @@ project_name:
 
 primary_language:
   type: str
-  help: "Primary language module (lang:<langage>)"
+  help: "Primary language module (lang:<language>)"
   choices:
     "TypeScript (pnpm, strict TS, Lock 1 functional purity, ESLint Flat, Knip, DepCruiser, Vitest 95%)": "lang:ts"
-    "Kotlin 2.x (Gradle Kotlin DSL, Detekt maxIssues:0, Kotest, Coroutines, JaCoCo)": "lang:kotlin"
-    "Java 21 (Gradle, Spotless, Checkstyle, PMD, JUnit 5, JaCoCo)": "lang:java"
-    "Python 3.12+ (uv, Ruff McCabe <= 8, max 256 lines/file, MyPy strict, Radon, Pytest)": "lang:python"
-    "PHP (composer, pint, phpstan, pest)": "lang:php"
+    "Kotlin 2.x (Gradle Kotlin DSL, Detekt maxIssues:0, Kotest, Coroutines, JaCoCo, PITest)": "lang:kotlin"
+    "Java 21 (Gradle, Spotless, Checkstyle, PMD, JUnit 5, JaCoCo, PITest)": "lang:java"
+    "Python 3.12+ (uv, Ruff McCabe <= 8, max 256 lines/file, MyPy strict, Pytest, mutmut)": "lang:python"
+    "PHP 8.3+ (composer, pint, phpstan level max, pest, Infection PHP)": "lang:php"
+    "Shell / Bash (shellcheck, shfmt, bash -n, set -euo pipefail, zero eval)": "lang:shell"
   default: "lang:ts"
 
 framework:
   type: str
   help: "Framework sub-module (fw:<framework>)"
-  when: "{{ primary_language in ['lang:ts', 'lang:kotlin', 'lang:java', 'lang:python'] }}"
+  when: "{{ primary_language in ['lang:ts', 'lang:kotlin', 'lang:java', 'lang:python', 'lang:php'] }}"
   choices:
     "None (Pure language module)": "none"
     "React (Lock 2 i18n, Lock 4 Atomic Purity, WCAG 2.2 AA a11y, max 150 lines)": "fw:react"
@@ -45,6 +48,8 @@ framework:
     "NiceGUI (fw:nicegui — Reactive FastAPI/Vue Python UI, non-blocking async gates, User testing)": "fw:nicegui"
     "LangChain / LangGraph (fw:langchain — LCEL, LangGraph StateGraph, Gemini, MCP, SecretStr)": "fw:langchain"
     "Jupyter Lab / Notebook (fw:jupyter — uv reproducible notebooks, output stripping, nbmake)": "fw:jupyter"
+    "Django 5.x+ (fw:django — Services/Selectors, Ruff DJ001/DJ008/DJ012, djLint, django-stubs, pytest-django)": "fw:django"
+    "Symfony 7.x+ (fw:symfony — Deptrac Hexagonal layers, Twig-CS-Fixer, PHPStan Symfony+Doctrine, Infection)": "fw:symfony"
   default: "fw:react"
 
 addon_design_system:
@@ -55,9 +60,23 @@ addon_design_system:
 
 addon_testing_fortress:
   type: bool
-  help: "Enable addon:testing-fortress (Lock 6 Test Assertion Purity, 1:1 TDD companions, StrykerJS 95%, Playwright + Axe)?"
-  when: "{{ primary_language == 'lang:ts' }}"
+  help: "Enable addon:testing-fortress (Polyglot Lock 6 Test Assertion Purity, 1:1 TDD companions, cross-language mutation testing)?"
   default: true
+
+addon_docker:
+  type: bool
+  help: "Enable addon:docker (Dockerfile & Compose hardening, pinned image tags, non-root USER, healthchecks)?"
+  default: false
+
+addon_ffmpeg:
+  type: bool
+  help: "Enable addon:ffmpeg (FFmpeg audio/video pipeline safety, explicit array args, EBU R128 loudnorm)?"
+  default: false
+
+addon_ui_guardrails:
+  type: bool
+  help: "Enable addon:ui-guardrails (Cross-language 100% locale JSON key parity & WCAG 2.2 AA / UI accessibility)?"
+  default: false
 
 addon_storybook:
   type: bool
@@ -95,7 +114,7 @@ master_source:
 
 _tasks:
   - >-
-    bash "{{ _copier_conf.src_path }}/scripts/guardrails-cli.sh" init
+    bash "{{ _copier_conf.src_path }}/modules/core/files/.guardrails/scripts/guardrails-cli.sh" init
     --target "."
     --source "{{ master_source }}"
-    --modules "core,{{ primary_language }}{% if framework and framework != 'none' %},{{ framework }}{% endif %}{% if addon_design_system %},addon:design-system{% endif %}{% if addon_testing_fortress %},addon:testing-fortress{% endif %}{% if addon_storybook %},addon:storybook{% endif %}{% if addon_content_md %},addon:content-md{% endif %}{% if addon_cloudflare %},addon:cloudflare{% endif %}{% if addon_drizzle_d1 %},addon:drizzle-d1{% endif %}{% if addon_lib_exports %},addon:lib-exports{% endif %}"
+    --modules "core,{{ primary_language }}{% if framework and framework != 'none' %},{{ framework }}{% endif %}{% if addon_design_system %},addon:design-system{% endif %}{% if addon_testing_fortress %},addon:testing-fortress{% endif %}{% if addon_docker %},addon:docker{% endif %}{% if addon_ffmpeg %},addon:ffmpeg{% endif %}{% if addon_ui_guardrails %},addon:ui-guardrails{% endif %}{% if addon_storybook %},addon:storybook{% endif %}{% if addon_content_md %},addon:content-md{% endif %}{% if addon_cloudflare %},addon:cloudflare{% endif %}{% if addon_drizzle_d1 %},addon:drizzle-d1{% endif %}{% if addon_lib_exports %},addon:lib-exports{% endif %}"

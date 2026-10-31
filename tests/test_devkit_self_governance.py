@@ -3,8 +3,24 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from tests.helpers import REPO_ROOT, RepoTestWorkspace
+
+
+def _assert_dynamic_agents_and_taskfile(test_case: unittest.TestCase, proj: Path) -> None:
+    """Verify AGENTS.md and Taskfile.yml only contain active shell+docker fragments."""
+    agents_text = (proj / "AGENTS.md").read_text(encoding="utf-8")
+    test_case.assertIn("`lang:shell`", agents_text)
+    test_case.assertIn("`addon:docker`", agents_text)
+    for inactive_term in ("Minecraft", "Symfony", "Lock 2 (`fw:react`", "commitlint.config.mjs"):
+        test_case.assertNotIn(inactive_term, agents_text)
+
+    taskfile_text = (proj / "Taskfile.yml").read_text(encoding="utf-8")
+    test_case.assertIn("Taskfile.shell.yml", taskfile_text)
+    test_case.assertIn("Taskfile.docker.yml", taskfile_text)
+    for inactive_tf in ("Taskfile.ts.yml", "Taskfile.python.yml", "Taskfile.minecraft.yml"):
+        test_case.assertNotIn(inactive_tf, taskfile_text)
 
 
 class DevkitSelfGovernanceTests(unittest.TestCase):
@@ -79,6 +95,7 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             self.assertIn("# --- Module: core ---", gitignore_text)
             self.assertIn("# --- Module: lang:shell ---", gitignore_text)
             self.assertIn("# --- Module: addon:docker ---", gitignore_text)
+            _assert_dynamic_agents_and_taskfile(self, proj)
 
             (proj / ".gitignore.local").write_text("custom-build-dir/\n", encoding="utf-8")
             ws.run_cmd(["task", "guard:sync"], cwd=proj)

@@ -1,6 +1,6 @@
 # =============================================================================
 # Taskfile.php.yml — PHP Module Tasks (lang:php)
-# Tools: composer, pint, phpstan, pest
+# Tools: composer, pint, phpstan, pest, infection
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 version: '3'
@@ -29,11 +29,14 @@ tasks:
       - bash .guardrails/scripts/validate-php.sh .
       - |
         mkdir -p .cache/phpstan
-        if [ -x ./vendor/bin/pint ]; then
+        if [ -f composer.json ] && [ -x ./vendor/bin/pint ] && [ -x ./vendor/bin/phpstan ]; then
           ./vendor/bin/pint --test --config pint.json --cache-file=.cache/pint.json
-        fi
-        if [ -x ./vendor/bin/phpstan ]; then
           ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified pint.json, phpstan.neon.dist, and declare(strict_types=1)."
+        else
+          echo "[PHP LINT ERROR] Missing composer.json, ./vendor/bin/pint, or ./vendor/bin/phpstan (fail-closed)." >&2
+          exit 1
         fi
 
   typecheck:
@@ -46,10 +49,13 @@ tasks:
           echo "[PHP TYPECHECK ERROR] Missing locked phpstan.neon.dist." >&2
           exit 1
         fi
-        if [ -x ./vendor/bin/phpstan ]; then
+        if [ -f composer.json ] && [ -x ./vendor/bin/phpstan ]; then
           ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified phpstan.neon.dist (level: max) & declare(strict_types=1)."
         else
-          echo "[lang:php] Verified phpstan.neon.dist (level: max) & declare(strict_types=1)."
+          echo "[PHP TYPECHECK ERROR] Missing composer.json or ./vendor/bin/phpstan (fail-closed)." >&2
+          exit 1
         fi
 
   test:
@@ -57,18 +63,26 @@ tasks:
     cmds:
       - |
         mkdir -p .cache/phpunit
-        if [ -x ./vendor/bin/pest ]; then
+        if [ -f composer.json ] && [ -x ./vendor/bin/pest ]; then
           ./vendor/bin/pest --parallel --cache-directory=.cache/phpunit --coverage --min=85
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified Pest test runner gate."
+        else
+          echo "[PHP TEST ERROR] Missing composer.json or ./vendor/bin/pest (fail-closed)." >&2
+          exit 1
         fi
 
   coverage:
     desc: "Verify Pest code coverage gate (>= 85% threshold)"
     cmds:
       - |
-        if [ -x ./vendor/bin/pest ]; then
+        if [ -f composer.json ] && [ -x ./vendor/bin/pest ]; then
           ./vendor/bin/pest --coverage --min=85
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified Pest coverage gate (--coverage --min=85)."
         else
-          echo "[lang:php] Verified Pest coverage gate (--coverage --min=85)."
+          echo "[PHP COVERAGE ERROR] Missing composer.json or ./vendor/bin/pest (fail-closed)." >&2
+          exit 1
         fi
 
   mutate:
@@ -79,8 +93,11 @@ tasks:
           echo "[PHP MUTATE ERROR] Missing locked infection.json5 configuration." >&2
           exit 1
         fi
-        if [ -x ./vendor/bin/infection ]; then
+        if [ -f composer.json ] && [ -x ./vendor/bin/infection ]; then
           XDEBUG_MODE=coverage ./vendor/bin/infection --configuration=infection.json5 --threads=max --min-msi=85 --min-covered-msi=90
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified infection.json5 (minMsi: 85%, minCoveredMsi: 90%, staticAnalysisTool: phpstan)."
         else
-          echo "[lang:php] Verified infection.json5 (minMsi: 85%, minCoveredMsi: 90%, staticAnalysisTool: phpstan)."
+          echo "[PHP MUTATE ERROR] Missing composer.json or ./vendor/bin/infection (fail-closed)." >&2
+          exit 1
         fi

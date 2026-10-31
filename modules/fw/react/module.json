@@ -2,5 +2,5 @@
   "id": "fw:react",
   "layer": "fw",
   "description": "React framework rules: AST hooks enforcement, jsx-a11y, i18n no-raw-text, max 150 lines per component",
-  "depends_on": ["core", "lang:ts"]
+  "depends_on": ["core", "lang:ts", "addon:ui-guardrails"]
 }

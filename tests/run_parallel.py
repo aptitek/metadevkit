@@ -16,11 +16,27 @@ CACHE_FILE = REPO_ROOT / ".cache" / "unittest" / "results.json"
 
 
 def _compute_repo_fingerprint() -> str:
-    """Compute a fast SHA-256 digest of all modules/, scripts/, and tests/helpers.py."""
+    """Compute a fast SHA-256 digest of all root configs, modules/, scripts/, and tests/helpers.py."""
     hasher = hashlib.sha256()
-    tracked_roots = [REPO_ROOT / "modules", REPO_ROOT / "scripts", REPO_ROOT / "tests" / "helpers.py"]
+    tracked_roots = [
+        REPO_ROOT / "Taskfile.yml",
+        REPO_ROOT / "mise.toml",
+        REPO_ROOT / "ruff.toml",
+        REPO_ROOT / "pyproject.toml",
+        REPO_ROOT / "copier.yml",
+        REPO_ROOT / "AGENTS.md",
+        REPO_ROOT / "README.md",
+        REPO_ROOT / ".gitignore",
+        REPO_ROOT / ".guardrails.lock",
+        REPO_ROOT / ".guardrails",
+        REPO_ROOT / ".agents",
+        REPO_ROOT / "modules",
+        REPO_ROOT / "scripts",
+        REPO_ROOT / "tests" / "helpers.py",
+    ]
     for root in tracked_roots:
         if root.is_file():
+            hasher.update(str(root.relative_to(REPO_ROOT)).encode("utf-8"))
             hasher.update(root.read_bytes())
         elif root.is_dir():
             for path in sorted(root.rglob("*")):
@@ -50,44 +66,55 @@ def _run_single_test_file(test_file: Path) -> tuple[str, int, str]:
     return (test_file.name, proc.returncode, proc.stdout + proc.stderr)
 
 
+def _load_cache(use_cache: bool) -> dict[str, str]:
+    """Load cached test digests from disk when caching is enabled."""
+    if not use_cache or not CACHE_FILE.is_file():
+        return {}
+    try:
+        loaded: dict[str, str] = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        return loaded
+    except ValueError:
+        return {}
+
+
+def _execute_pending(
+    pending: list[tuple[Path, str]],
+    cache_data: dict[str, str],
+) -> int:
+    """Run uncached test files across worker processes and update cache_data."""
+    if not pending:
+        return 0
+    failures = 0
+    max_workers = min(len(pending), os.cpu_count() or 4)
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+        future_map = {pool.submit(_run_single_test_file, tf): (tf, dg) for tf, dg in pending}
+        for fut in as_completed(future_map):
+            _, dg = future_map[fut]
+            name, code, output = fut.result()
+            if code == 0:
+                cache_data[name] = dg
+                sys.stdout.write(f"PASS {name}\n")
+            else:
+                failures += 1
+                sys.stderr.write(f"FAIL {name}\n{output}\n")
+    return failures
+
+
 def main() -> int:
     """Run all test_*.py modules in parallel with content-addressable caching."""
     start = time.monotonic()
-    tests_dir = REPO_ROOT / "tests"
-    test_files = sorted(tests_dir.glob("test_*.py"))
+    test_files = sorted((REPO_ROOT / "tests").glob("test_*.py"))
     repo_fp = _compute_repo_fingerprint()
     use_cache = os.environ.get("GUARDRAILS_NO_CACHE", "0") != "1"
+    cache_data = _load_cache(use_cache)
 
-    cache_data: dict[str, str] = {}
-    if use_cache and CACHE_FILE.is_file():
-        try:
-            cache_data = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
-        except ValueError:
-            cache_data = {}
-
-    pending: list[tuple[Path, str]] = []
-    cached_hits = 0
-    for tf in test_files:
-        digest = _file_digest(tf, repo_fp)
-        if use_cache and cache_data.get(tf.name) == digest:
-            cached_hits += 1
-        else:
-            pending.append((tf, digest))
-
-    failures = 0
-    if pending:
-        max_workers = min(len(pending), os.cpu_count() or 4)
-        with ProcessPoolExecutor(max_workers=max_workers) as pool:
-            future_map = {pool.submit(_run_single_test_file, tf): (tf, dg) for tf, dg in pending}
-            for fut in as_completed(future_map):
-                tf, dg = future_map[fut]
-                name, code, output = fut.result()
-                if code == 0:
-                    cache_data[name] = dg
-                    sys.stdout.write(f"PASS {name}\n")
-                else:
-                    failures += 1
-                    sys.stderr.write(f"FAIL {name}\n{output}\n")
+    pending = [
+        (tf, _file_digest(tf, repo_fp))
+        for tf in test_files
+        if not (use_cache and cache_data.get(tf.name) == _file_digest(tf, repo_fp))
+    ]
+    cached_hits = len(test_files) - len(pending)
+    failures = _execute_pending(pending, cache_data)
 
     if failures == 0 and use_cache:
         CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)

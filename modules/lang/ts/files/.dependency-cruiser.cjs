@@ -1,9 +1,13 @@
 // =============================================================================
-// .dependency-cruiser.cjs — Strict Architectural & Dependency Graph Fortress
+// .dependency-cruiser.cjs — Strict Architectural & Dependency Graph Fortress (lang:ts)
+// Dynamically merges module-specific overlays from .guardrails/depcruise/*.cjs
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+const fs = require('node:fs');
+const path = require('node:path');
+
 /** @type {import('dependency-cruiser').IConfiguration} */
-module.exports = {
+const baseConfig = {
   forbidden: [
     {
       name: 'no-circular',
@@ -22,9 +26,7 @@ module.exports = {
           '(^|/)[.][^/]+[.](?:js|cjs|mjs|ts|cts|mts|json)$',
           '[.]d[.]ts$',
           '(^|/)tsconfig.*[.]json$',
-          '(^|/)(?:vitest|astro|playwright|panda|eslint|commitlint|stryker|drizzle)[.]config[.](?:js|cjs|mjs|ts|cts|mts|json)$',
-          '^src/(?:content[.]config[.]ts|tokens/.*[.]ts|.*[.]stories[.]tsx)$',
-          '^simulations/(?:.*[.]stories[.]tsx)$',
+          '(^|/)(?:vitest|playwright|eslint|commitlint|stryker|drizzle)[.]config[.](?:js|cjs|mjs|ts|cts|mts|json)$',
           '^tests/',
           '^scripts/',
           '^[.]guardrails/',
@@ -69,7 +71,7 @@ module.exports = {
       from: {},
       to: {
         couldNotResolve: true,
-        pathNot: ['^astro:', '[+]types/'],
+        pathNot: ['[+]types/'],
       },
     },
     {
@@ -93,8 +95,8 @@ module.exports = {
       name: 'not-to-dev-dep',
       severity: 'error',
       from: {
-        path: '^(src|simulations)',
-        pathNot: '[.](?:spec|test|stories)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$',
+        path: '^src',
+        pathNot: '[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$',
       },
       to: {
         dependencyTypes: ['npm-dev'],
@@ -103,58 +105,16 @@ module.exports = {
       },
     },
     {
-      name: 'tokens-independence',
-      severity: 'error',
-      comment: 'Design tokens must not depend on UI, simulations, or i18n layers.',
-      from: { path: '^src/tokens/' },
-      to: { path: '^(?:src/(?!tokens/)|simulations/)' },
-    },
-    {
-      name: 'i18n-independence',
-      severity: 'error',
-      comment: 'i18n layer must only depend on tokens or i18n.',
-      from: { path: '^src/i18n/' },
-      to: { path: '^(?:src/(?!tokens/|i18n/)|simulations/)' },
-    },
-    {
-      name: 'atomic-atoms-hierarchy',
-      severity: 'error',
-      comment: 'Atoms must not import from molecules, organisms, templates, pages, or simulations.',
-      from: { path: '^src/components/atoms/' },
-      to: { path: '^(?:src/components/(?:molecules|organisms|templates|pages)/|simulations/)' },
-    },
-    {
-      name: 'atomic-molecules-hierarchy',
-      severity: 'error',
-      comment: 'Molecules must not import from organisms, templates, pages, or simulations.',
-      from: { path: '^src/components/molecules/' },
-      to: { path: '^(?:src/components/(?:organisms|templates|pages)/|simulations/)' },
-    },
-    {
-      name: 'atomic-organisms-hierarchy',
-      severity: 'error',
-      comment: 'Organisms must not import from templates or pages.',
-      from: { path: '^src/components/organisms/' },
-      to: { path: '^src/components/(?:templates|pages)/' },
-    },
-    {
-      name: 'atomic-templates-hierarchy',
-      severity: 'error',
-      comment: 'Templates must not import from pages or i18n (pure spatial slots only).',
-      from: { path: '^src/components/templates/' },
-      to: { path: '^src/(?:components/pages/|i18n/)' },
-    },
-    {
       name: 'scripts-independence',
       severity: 'error',
-      comment: 'Guardian scripts and ESLint plugins must not import runtime application code from src/, simulations/, or tests/.',
+      comment: 'Guardian scripts must not import runtime application code from src/ or tests/.',
       from: { path: '^scripts/' },
-      to: { path: '^(?:src/(?!types/)|simulations/|tests/)' },
+      to: { path: '^(?:src/(?!types/)|tests/)' },
     },
   ],
   options: {
-    doNotFollow: { path: ['node_modules', 'styled-system'] },
-    exclude: { path: ['styled-system', '.astro', 'dist', 'build', 'coverage', '.guardrails'] },
+    doNotFollow: { path: ['node_modules'] },
+    exclude: { path: ['dist', 'build', 'coverage', '.guardrails', '.cache'] },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ['exports'],
@@ -163,3 +123,22 @@ module.exports = {
     },
   },
 };
+
+const overlayDir = path.resolve(__dirname, '.guardrails/depcruise');
+if (fs.existsSync(overlayDir)) {
+  for (const file of fs.readdirSync(overlayDir).sort()) {
+    if (!file.endsWith('.cjs')) continue;
+    const overlay = require(path.join(overlayDir, file));
+    if (Array.isArray(overlay.forbidden)) {
+      baseConfig.forbidden.push(...overlay.forbidden);
+    }
+    if (Array.isArray(overlay.doNotFollowPaths)) {
+      baseConfig.options.doNotFollow.path.push(...overlay.doNotFollowPaths);
+    }
+    if (Array.isArray(overlay.excludePaths)) {
+      baseConfig.options.exclude.path.push(...overlay.excludePaths);
+    }
+  }
+}
+
+module.exports = baseConfig;

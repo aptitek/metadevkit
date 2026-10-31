@@ -1,5 +1,5 @@
 # --- Module: core (Standalone Native Binaries — Zero Node/Python Runtime) ---
-go-task = "latest"
-lefthook = "latest"
-jq = "latest"
-trivy = "latest"
+go-task = "3.42"
+lefthook = "1.11"
+jq = "1.7"
+trivy = "0.59"

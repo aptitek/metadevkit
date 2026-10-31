@@ -21,12 +21,15 @@ export const ARCHITECTURAL_SCOPES = [
   "mixin",
   "network",
   "test",
+  "tests",
   "docs",
   "deps",
   "config",
   "security",
   "a11y",
   "storybook",
+  "guardrails",
+  "scripts",
 ];
 
 export const ALLOWED_COMMIT_TYPES = [

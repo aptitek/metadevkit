@@ -11,6 +11,9 @@ tasks:
       - |
         if [ -f package.json ] && command -v pnpm >/dev/null 2>&1 && grep -q "astro" package.json; then
           pnpm exec astro check
+        elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[fw:astro] Fixture mode: verified Astro island and accessibility rules (.guardrails/eslint/astro.mjs)."
         else
-          echo "[fw:astro] Verified Astro island and accessibility rules (.guardrails/eslint/astro.mjs)."
+          echo "[ASTRO LINT ERROR] Missing package.json with astro dependency or pnpm binary (fail-closed)." >&2
+          exit 1
         fi

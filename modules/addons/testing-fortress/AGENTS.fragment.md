@@ -1,0 +1,3 @@
+### `addon:testing-fortress` — Polyglot Test Assertion Purity & Mutation (Lock 6)
+- **Locked Configs**: `.guardrails/scripts/validate-testing-fortress.sh` (plus `playwright.config.ts` and `stryker.config.mjs` when `lang:ts` is active).
+- **Lock 6**: Bans skipped/focused tests (`it.skip`, `test.only`, `pytest.skip`, `@Disabled`, `->skip()`), weak/tautological matchers (`toBeTruthy`, `toMatchSnapshot`, `assert True`, `assertTrue(true)`), and `vi.mock()`. Requires 1:1 `.test.ts(x)` companions and enforces cross-language mutation thresholds (`StrykerJS >= 95%`, `mutmut >= 90%`, `PITest >= 85%`, `Infection >= 85%`).

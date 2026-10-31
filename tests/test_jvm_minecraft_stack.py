@@ -89,23 +89,19 @@ class JvmMinecraftStackTests(unittest.TestCase):
             srv_dir = proj / "src" / "main" / "kotlin" / "com" / "stellar" / "ops" / "server"
             srv_dir.mkdir(parents=True, exist_ok=True)
             bad_srv = srv_dir / "BadServer.kt"
-            bad_srv.write_text(
-                "package com.stellar.ops.server\nimport net.minecraft.client.Minecraft\n",
-                encoding="utf-8",
-            )
-            side_proc = ws.run_cmd(["task", "lint"], cwd=proj, check=False)
-            self.assertNotEqual(side_proc.returncode, 0)
+            bad_srv.write_text("package com.stellar.ops.server\nimport net.minecraft.client.Minecraft\n")
+            self.assertNotEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
             bad_srv.unlink()
 
             mixin_dir = proj / "src" / "main" / "java" / "com" / "stellar" / "ops" / "mixin"
             mixin_dir.mkdir(parents=True, exist_ok=True)
             bad_mixin = mixin_dir / "BadMixin.java"
             bad_mixin.write_text(
-                "package com.stellar.ops.mixin;\nimport org.spongepowered.asm.mixin.Overwrite;\npublic class BadMixin { @Overwrite public String toString() { return \"\"; } }\n",
-                encoding="utf-8",
+                "package com.stellar.ops.mixin;\n"
+                "import org.spongepowered.asm.mixin.Overwrite;\n"
+                'public class BadMixin { @Overwrite public String toString() { return ""; } }\n'
             )
-            mixin_proc = ws.run_cmd(["task", "lint"], cwd=proj, check=False)
-            self.assertNotEqual(mixin_proc.returncode, 0)
+            self.assertNotEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
             bad_mixin.unlink()
 
             _write_compliant_minecraft_fixtures(proj)

@@ -21,9 +21,7 @@ Every commit message is validated by `commitlint.config.mjs` and the `lefthook.y
 - **Header max length**: `100` characters (`subject-min-length: 15`).
 - **Allowed `<type>` values**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 - **Mandatory `<scope>` values** (`scope-empty: never`):
-  - Atomic UI layers: `atoms`, `molecules`, `organisms`, `templates`, `pages`
-  - Styling & Content: `tokens`, `theme`, `recipes`, `i18n`, `a11y`, `content`, `courses`, `simulations`
-  - Platform & Quality: `router`, `seo`, `db`, `auth`, `worker`, `eslint`, `deps`, `ci`, `config`, `scripts`, `tests`, `e2e`, `storybook`, `docs`, `release`, `security`, `guardrails`
+  - `core`, `ui`, `tokens`, `routes`, `db`, `i18n`, `ci`, `lint`, `theme`, `worker`, `minecraft`, `quilt`, `fabric`, `mixin`, `network`, `test`, `tests`, `docs`, `deps`, `config`, `security`, `a11y`, `storybook`, `guardrails`, `scripts`
 - **Subject rules**: lowercase start (`subject-case: lower-case`), imperative mood, no trailing period, at least 15 characters long.
 
 ## 2. Pre-Commit Verification Checklist

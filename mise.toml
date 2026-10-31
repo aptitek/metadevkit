@@ -5,16 +5,16 @@
 [tools]
 
 # --- Module: core (Standalone Native Binaries — Zero Node/Python Runtime) ---
-go-task = "latest"
-lefthook = "latest"
-jq = "latest"
-trivy = "latest"
+go-task = "3.42"
+lefthook = "1.11"
+jq = "1.7"
+trivy = "0.59"
 
 # --- Module: lang:python ---
 python = "3.12"
-uv = "latest"
-ruff = "latest"
+uv = "0.6"
+ruff = "0.11"
 
-# --- lang:shell toolchain ---
-shellcheck = "latest"
-shfmt = "latest"
+# --- Module: lang:shell ---
+shellcheck = "0.10"
+shfmt = "3.11"
