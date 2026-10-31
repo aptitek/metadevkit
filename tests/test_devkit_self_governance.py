@@ -110,6 +110,35 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             dockerfile.write_text("FROM alpine:3.21\nUSER appuser\n", encoding="utf-8")
             ws.run_cmd(["task", "verify"], cwd=proj)
 
+    def test_standalone_taskfile_and_bootstrap_script(self) -> None:
+        """Verify downloading only Taskfile.yml or running scripts/bootstrap.sh initializes a project."""
+        with RepoTestWorkspace() as ws:
+            standalone = ws.project_dir("standalone-tf")
+            (standalone / "Taskfile.yml").write_text(
+                (REPO_ROOT / "Taskfile.yml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            ws.run_cmd(
+                ["task", "init", "MODULES=core,lang:shell", f"REPO_URL={REPO_ROOT}"],
+                cwd=standalone,
+            )
+            self.assertEqual(ws.read_manifest_modules(standalone), ["core", "lang:shell"])
+            self.assertTrue((standalone / ".gitattributes").is_file())
+            ws.run_cmd(["task", "verify"], cwd=standalone)
+
+            boot_dir = ws.project_dir("boot-script-app")
+            (boot_dir / "Taskfile.yml").write_text(
+                (REPO_ROOT / "Taskfile.yml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            boot_sh = REPO_ROOT / "scripts" / "bootstrap.sh"
+            ws.run_cmd(
+                ["bash", "-c", f'REPO_URL="{REPO_ROOT}" bash -s -- "shell,docker" < "{boot_sh}"'],
+                cwd=boot_dir,
+            )
+            self.assertEqual(ws.read_manifest_modules(boot_dir), ["core", "lang:shell", "addon:docker"])
+            ws.run_cmd(["task", "guard:check"], cwd=boot_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

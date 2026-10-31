@@ -44,6 +44,7 @@ checked_count=0
 declare -A locked_paths=()
 
 while IFS= read -r line || [[ -n "$line" ]]; do
+  line="${line%$'\r'}"
   [[ -z "$line" || "$line" =~ ^# ]] && continue
 
   expected_hash="${line%%  *}"

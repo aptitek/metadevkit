@@ -10,11 +10,6 @@ vars:
   STAGED_FILES: '{{.STAGED_FILES | default ""}}'
 
 tasks:
-  default:
-    desc: "Run full verification suite (default)"
-    cmds:
-      - task: verify
-
   guard:check:
     desc: "Verify SHA-256 integrity of all locked configuration files (.guardrails.lock)"
     cmds:
@@ -29,11 +24,6 @@ tasks:
     desc: "Add a hierarchical or orthogonal module (e.g. task feature:add -- cloudflare)"
     cmds:
       - bash ./.guardrails/scripts/guardrails-cli.sh feature-add {{.CLI_ARGS}} --target "."
-
-  init:
-    desc: "Initialize or convert a target project (e.g. task init -- --target /path --modules core,lang:ts)"
-    cmds:
-      - bash ./.guardrails/scripts/guardrails-cli.sh init {{.CLI_ARGS}}
 
   self-test:
     desc: "Run automated end-to-end integration self-test suite"

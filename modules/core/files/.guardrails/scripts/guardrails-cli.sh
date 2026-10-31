@@ -31,7 +31,7 @@ compute_sha256() {
 find_master_root() {
   local dir
   dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  while [[ "$dir" != "/" ]]; do
+  while [[ "$dir" != "/" && "$dir" != "." && ! "$dir" =~ ^[A-Za-z]:/?$ ]]; do
     if [[ -f "${dir}/modules/core/module.json" ]]; then
       echo "$dir"
       return 0
@@ -145,7 +145,7 @@ resolve_source_dir() {
 
   local tmp_clone
   tmp_clone="$(mktemp -d -t guardrails-src-XXXXXX)"
-  git clone --depth 1 "$source_spec" "$tmp_clone" >/dev/null 2>&1
+  git clone --depth 1 -c core.autocrlf=false "$source_spec" "$tmp_clone" >/dev/null 2>&1
   echo "$tmp_clone"
 }
 
@@ -163,6 +163,7 @@ generate_lockfile() {
   local lock_file="${target_dir}/.guardrails.lock"
   local -a CandidateFiles=(
     ".gitignore"
+    ".gitattributes"
     "Taskfile.yml"
     "mise.toml"
     "lefthook.yml"
@@ -349,20 +350,32 @@ apply_modules() {
     cat "${target_dir}/.gitignore.local" >> "$gitignore_file"
   fi
 
-  # Dynamically generate Taskfile.yml for ONLY the active modules
+  # Dynamically generate self-bootstrapping Taskfile.yml for ONLY the active modules
   local taskfile="${target_dir}/Taskfile.yml"
   {
     echo "# ============================================================================="
-    echo "# Taskfile.yml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)"
+    echo "# Taskfile.yml — Universal Bootstrap & Polyglot Guardrails Contract"
+    echo "# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)"
     echo "# Active modules: ${active_modules[*]}"
     echo "# For project-specific tasks or variables, create 'Taskfile.local.yml'."
+    echo "#"
+    echo "# Universal One-Liner Bootstrap (Linux / macOS / Windows MSYS2 / Git Bash):"
+    echo "#   curl -fsSL https://raw.githubusercontent.com/aptitek/metadevkit/main/scripts/bootstrap.sh | bash -s -- python,django"
+    echo "#   curl -fsSLO https://raw.githubusercontent.com/aptitek/metadevkit/main/Taskfile.yml && task init MODULES=python,django"
+    echo "# Windows PowerShell (Auto-installs MSYS2 + go-task + mise + initializes project):"
+    echo "#   irm https://raw.githubusercontent.com/aptitek/metadevkit/main/scripts/bootstrap.ps1 | iex"
     echo "# ============================================================================="
     echo "version: '3'"
+    echo ""
+    echo "vars:"
+    echo "  MODULES: '{{.MODULES | default \"core,lang:ts\"}}'"
+    echo "  REPO_URL: '{{.REPO_URL | default \"https://github.com/aptitek/metadevkit.git\"}}'"
     echo ""
     echo "includes:"
     echo "  base:"
     echo "    taskfile: ./.guardrails/taskfiles/Taskfile.base.yml"
     echo "    flatten: true"
+    echo "    optional: true"
     for mod_id in "${active_modules[@]}"; do
       [[ "${mod_id}" == "core" ]] && continue
       local short="${mod_id#*:}"
@@ -375,6 +388,74 @@ apply_modules() {
     echo "  local:"
     echo "    taskfile: ./Taskfile.local.yml"
     echo "    optional: true"
+    echo ""
+    echo "tasks:"
+    echo "  default:"
+    echo "    desc: \"Bootstrap project if uninitialized, otherwise run full verification suite\""
+    echo "    cmds:"
+    echo "      - |"
+    echo "        if [ ! -f ./.guardrails/manifest.json ]; then"
+    echo "          {{.TASK_EXE}} bootstrap MODULES=\"{{.MODULES}}\" REPO_URL=\"{{.REPO_URL}}\""
+    echo "        else"
+    echo "          {{.TASK_EXE}} verify"
+    echo "        fi"
+    echo ""
+    echo "  bootstrap:"
+    echo "    desc: \"Auto-install prerequisites (MSYS2 on Windows, mise, jq, git) and initialize project from remote master\""
+    echo "    cmds:"
+    echo "      - |"
+    echo "        if [ \"\${OS:-}\" = \"Windows_NT\" ] || uname -s 2>/dev/null | grep -qiE \"mingw|msys|cygwin\"; then"
+    echo "          if [ ! -x \"/c/msys64/usr/bin/bash.exe\" ] && [ ! -x \"C:/msys64/usr/bin/bash.exe\" ] && command -v winget.exe >/dev/null 2>&1; then"
+    echo "            winget.exe install -e --id MSYS2.MSYS2 --accept-source-agreements --accept-package-agreements || true"
+    echo "          fi"
+    echo "          for msys_bin in \"/c/msys64/usr/bin\" \"C:/msys64/usr/bin\"; do"
+    echo "            if [ -d \"\$msys_bin\" ]; then"
+    echo "              export PATH=\"\${msys_bin}:\${PATH}\""
+    echo "              if [ -x \"\${msys_bin}/pacman.exe\" ]; then"
+    echo "                \"\${msys_bin}/pacman.exe\" -S --noconfirm --needed bash git jq curl tar || true"
+    echo "              fi"
+    echo "              break"
+    echo "            fi"
+    echo "          done"
+    echo "        fi"
+    echo "        if ! command -v mise >/dev/null 2>&1; then"
+    echo "          if command -v winget.exe >/dev/null 2>&1; then"
+    echo "            winget.exe install -e --id jdx.mise --accept-source-agreements --accept-package-agreements || true"
+    echo "          elif command -v brew >/dev/null 2>&1; then"
+    echo "            brew install mise || true"
+    echo "          elif command -v curl >/dev/null 2>&1; then"
+    echo "            mise_tmp=\"\$(mktemp -d)\""
+    echo "            curl -fsSL https://mise.run -o \"\${mise_tmp}/install.sh\" && sh \"\${mise_tmp}/install.sh\" || true"
+    echo "            rm -rf \"\${mise_tmp}\""
+    echo "            export PATH=\"\${HOME}/.local/bin:\${PATH}\""
+    echo "          fi"
+    echo "        fi"
+    echo "        if [ -d \"{{.REPO_URL}}/modules/core\" ]; then"
+    echo "          GUARDRAILS_ORIGIN_URL=\"{{.REPO_URL}}\" bash \"{{.REPO_URL}}/modules/core/files/.guardrails/scripts/guardrails-cli.sh\" init --target \".\" --source \"{{.REPO_URL}}\" --modules \"{{.MODULES}}\" {{.CLI_ARGS}}"
+    echo "        else"
+    echo "          tmp_src=\"\$(mktemp -d)\""
+    echo "          trap 'rm -rf \"\${tmp_src}\"' EXIT"
+    echo "          git clone --depth 1 -c core.autocrlf=false \"{{.REPO_URL}}\" \"\${tmp_src}\""
+    echo "          GUARDRAILS_ORIGIN_URL=\"{{.REPO_URL}}\" bash \"\${tmp_src}/modules/core/files/.guardrails/scripts/guardrails-cli.sh\" init --target \".\" --source \"\${tmp_src}\" --modules \"{{.MODULES}}\" {{.CLI_ARGS}}"
+    echo "        fi"
+    echo "        if command -v mise >/dev/null 2>&1; then"
+    echo "          mise trust -a || true"
+    echo "          mise install || true"
+    echo "        fi"
+    echo ""
+    echo "  init:"
+    echo "    desc: \"Initialize or convert a project (auto-bootstraps from remote if .guardrails is absent)\""
+    echo "    cmds:"
+    echo "      - |"
+    echo "        if [ -f ./.guardrails/scripts/guardrails-cli.sh ]; then"
+    echo "          if [ -n \"{{.CLI_ARGS}}\" ]; then"
+    echo "            bash ./.guardrails/scripts/guardrails-cli.sh init {{.CLI_ARGS}}"
+    echo "          else"
+    echo "            bash ./.guardrails/scripts/guardrails-cli.sh init --target \".\" --modules \"{{.MODULES}}\""
+    echo "          fi"
+    echo "        else"
+    echo "          {{.TASK_EXE}} bootstrap MODULES=\"{{.MODULES}}\" REPO_URL=\"{{.REPO_URL}}\" CLI_ARGS=\"{{.CLI_ARGS}}\""
+    echo "        fi"
   } > "$taskfile"
 
   chmod +x "${target_dir}/.guardrails/scripts/"*.sh 2>/dev/null || true
@@ -384,7 +465,7 @@ apply_modules() {
   commit_sha="$(get_source_commit "$master_dir")"
   local modules_json
   modules_json="$(printf '%s\n' "${active_modules[@]}" | jq -R . | jq -s .)"
-  local manifest_source="$source_spec"
+  local manifest_source="${GUARDRAILS_ORIGIN_URL:-$source_spec}"
   if [[ "${target_dir}" == "${master_dir}" ]]; then
     manifest_source="."
   fi

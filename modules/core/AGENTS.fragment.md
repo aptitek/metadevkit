@@ -20,7 +20,7 @@ You MUST interact with the repository **exclusively** through the universal `tas
 | Run cross-language i18n locale parity & literal check | `task i18n` |
 | Run cross-language branch & line coverage verification | `task coverage` |
 | Run cross-language mutation testing | `task mutate` |
-| Initialize a target project | `task init -- --target <dir> --modules <m1,m2>` |
+| Initialize or bootstrap a project | `task init MODULES=<m1,m2>` / `task bootstrap` |
 | Verify config lock | `task guard:check` |
 | Sync guardrails | `task guard:sync` |
 | Add module/addon | `task feature:add -- <mod>` |
@@ -29,7 +29,7 @@ You MUST interact with the repository **exclusively** through the universal `tas
 
 ## 2. Anti-Tamper & Zero Config Drift Policy (`.guardrails.lock`)
 All configuration files tracked in `.guardrails.lock` are cryptographically locked via SHA-256 checksums:
-- Core foundation files: `.gitignore`, `Taskfile.yml`, `mise.toml`, `lefthook.yml`, `AGENTS.md`
+- Core foundation files: `.gitignore`, `.gitattributes`, `Taskfile.yml`, `mise.toml`, `lefthook.yml`, `AGENTS.md`
 - Everything inside `.guardrails/**` and `.agents/**`
 - Module-specific configuration files installed by active modules in `.guardrails/manifest.json`
 

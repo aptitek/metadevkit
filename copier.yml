@@ -20,6 +20,7 @@ _exclude:
   - "lefthook.yml"
   - "AGENTS.md"
   - ".gitignore"
+  - ".gitattributes"
   - "copier.yml"
   - "README.md"
   - "modules"

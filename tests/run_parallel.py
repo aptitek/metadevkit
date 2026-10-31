@@ -27,6 +27,7 @@ def _compute_repo_fingerprint() -> str:
         REPO_ROOT / "AGENTS.md",
         REPO_ROOT / "README.md",
         REPO_ROOT / ".gitignore",
+        REPO_ROOT / ".gitattributes",
         REPO_ROOT / ".guardrails.lock",
         REPO_ROOT / ".guardrails",
         REPO_ROOT / ".agents",
