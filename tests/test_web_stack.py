@@ -36,14 +36,25 @@ class WebStackTests(unittest.TestCase):
     """Verify Web modules, dynamic feature:add, AST anti-bypass, and full verify."""
 
     def test_pure_ts_does_not_include_react_or_astro_rules(self) -> None:
-        """Verify pure lang:ts omits .size-limit.json and React Atomic rules in .dependency-cruiser.cjs."""
+        """Verify pure lang:ts omits .size-limit.json, React Atomic rules, simulations, and app/routes."""
         with RepoTestWorkspace() as ws:
             pure_ts = ws.project_dir("pure-ts")
-            ws.init_project(pure_ts, "core,lang:ts")
+            ws.init_project(pure_ts, "core,lang:ts,addon:testing-fortress")
             self.assertFalse((pure_ts / ".size-limit.json").exists())
             depcruise_text = (pure_ts / ".dependency-cruiser.cjs").read_text(encoding="utf-8")
             self.assertNotIn("src/components/atoms", depcruise_text)
             self.assertNotIn("simulations/", depcruise_text)
+
+            vitest_text = (pure_ts / "vitest.config.ts").read_text(encoding="utf-8")
+            self.assertNotIn("simulations/", vitest_text)
+            self.assertNotIn("src/content.config.ts", vitest_text)
+
+            stryker_text = (pure_ts / "stryker.config.mjs").read_text(encoding="utf-8")
+            self.assertNotIn("simulations/", stryker_text)
+
+            knip_text = (pure_ts / "knip.json").read_text(encoding="utf-8")
+            self.assertNotIn("app/root.tsx", knip_text)
+            self.assertNotIn("app/routes", knip_text)
 
     def test_web_stack_feature_add_and_verify(self) -> None:
         """Add all 7 Web addons, test AST bypass rejection, and pass task verify."""
@@ -66,6 +77,7 @@ class WebStackTests(unittest.TestCase):
             active = ws.read_manifest_modules(proj)
             self.assertIn("addon:ui-guardrails", active)
             self.assertEqual(len(active), 11)
+            self.assertTrue((proj / ".guardrails" / "content-md" / "paths.json").is_file())
 
             atoms_dir = proj / "src" / "components" / "atoms"
             atoms_dir.mkdir(parents=True, exist_ok=True)

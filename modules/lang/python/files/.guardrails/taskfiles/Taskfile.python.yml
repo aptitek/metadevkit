@@ -6,8 +6,6 @@
 version: '3'
 
 env:
-  UV_CACHE_DIR: '{{.UV_CACHE_DIR | default "/tmp/polyglot-guardrails-env/uv-cache"}}'
-  UV_PYTHON: '{{.UV_PYTHON | default "/usr/bin/python3"}}'
   UV_LINK_MODE: '{{.UV_LINK_MODE | default "copy"}}'
   COVERAGE_FILE: '{{.COVERAGE_FILE | default ".cache/.coverage"}}'
 
@@ -16,14 +14,18 @@ tasks:
     desc: "Synchronize Python environment using uv"
     cmds:
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
-        mkdir -p .cache /tmp/polyglot-guardrails-env/uv-cache /tmp/polyglot-guardrails-env/bin
-        if command -v uv >/dev/null 2>&1; then
-          REAL_UV="$(mise which uv 2>/dev/null || command -v uv)"
-          if [ "$REAL_UV" != "/tmp/polyglot-guardrails-env/bin/uv" ]; then
-            cp -L "$REAL_UV" /tmp/polyglot-guardrails-env/bin/uv || true
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+          if ! command -v uv >/dev/null 2>&1 && command -v mise >/dev/null 2>&1; then
+            mise trust -a || true
+            mise install uv || true
           fi
         fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
+        mkdir -p .cache
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
           uv sync || uv sync --offline
         fi
@@ -32,13 +34,19 @@ tasks:
     desc: "Format Python files with ruff (cached)"
     cmds:
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         mkdir -p .cache/ruff
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
-          uv run --offline ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}} 2>/dev/null || \
-            uv run ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
+          uv run --offline ruff format --config ruff.toml --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}} 2>/dev/null || \
+            uv run ruff format --config ruff.toml --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         elif command -v ruff >/dev/null 2>&1; then
-          ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
+          ruff format --config ruff.toml --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         fi
 
   lint:
@@ -46,11 +54,17 @@ tasks:
     cmds:
       - bash .guardrails/scripts/validate-python.sh .
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         mkdir -p .cache/ruff .cache/mypy
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
-          uv run --offline ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}} || \
-            uv run ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
+          uv run --offline ruff check --config ruff.toml --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}} || \
+            uv run ruff check --config ruff.toml --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
           uv run --offline mypy --cache-dir=.cache/mypy --sqlite-cache . || \
             uv run mypy --cache-dir=.cache/mypy --sqlite-cache .
         elif [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
@@ -64,7 +78,13 @@ tasks:
     desc: "Run Python test suite with parallel workers and incremental cache"
     cmds:
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         if [ "${GUARDRAILS_SKIP_SELFTEST:-0}" = "1" ] && [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
           exit 0
         fi
@@ -88,7 +108,13 @@ tasks:
     cmds:
       - bash .guardrails/scripts/validate-python.sh .
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         mkdir -p .cache/mypy
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
           uv run --offline mypy --cache-dir=.cache/mypy --sqlite-cache . || \
@@ -104,7 +130,13 @@ tasks:
     desc: "Run Python branch coverage gate (>= 90% fail_under in .guardrails/python/coverage.toml)"
     cmds:
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         if [ ! -f .guardrails/python/coverage.toml ]; then
           echo "[PYTHON COVERAGE ERROR] Missing .guardrails/python/coverage.toml." >&2
           exit 1
@@ -126,12 +158,19 @@ tasks:
     desc: "Run Python mutation testing via uv and mutmut (>= 90% MSI / zero surviving mutants)"
     cmds:
       - |
-        export PATH="${PWD}/.venv/bin:/tmp/polyglot-guardrails-env/bin:${PATH}"
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
         if [ ! -f .guardrails/python/mutmut.toml ]; then
           echo "[PYTHON MUTATE ERROR] Missing .guardrails/python/mutmut.toml configuration." >&2
           exit 1
         fi
         if [ -f pyproject.toml ] && [ -d src ] && command -v uv >/dev/null 2>&1; then
+          trap 'rm -rf mutants .mutmut-cache' EXIT
           uv run --offline mutmut run || uv run mutmut run
         elif [ -f pyproject.toml ] && [ -f tests/run_parallel.py ] && command -v uv >/dev/null 2>&1; then
           uv run --offline python -c "import mutmut" || uv run python -c "import mutmut"

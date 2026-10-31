@@ -248,6 +248,7 @@ apply_modules() {
   # Unlinking .guardrails/scripts/* first ensures running scripts keep their old FD cleanly.
   rm -rf \
     "${target_dir}/.guardrails/ast" \
+    "${target_dir}/.guardrails/content-md" \
     "${target_dir}/.guardrails/depcruise" \
     "${target_dir}/.guardrails/eslint" \
     "${target_dir}/.guardrails/java" \

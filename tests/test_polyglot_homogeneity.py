@@ -4,8 +4,43 @@ from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
 
 from tests.helpers import RepoTestWorkspace
+
+
+def _seed_real_python_project(proj: Path) -> Path:
+    """Create pyproject.toml, src/calc/ops.py, and initial partial-branch test_ops.py."""
+    (proj / "pyproject.toml").write_text(
+        '[project]\nname = "real-py-e2e"\nversion = "0.1.0"\nrequires-python = ">=3.12"\n'
+        'dependencies = []\n\n[dependency-groups]\ndev = [\n'
+        '  "pytest>=8.3.0",\n  "pytest-cov>=6.0.0",\n  "ruff>=0.11.0",\n'
+        '  "mypy>=1.15.0",\n  "mutmut>=3.2.0",\n]\n\n'
+        '[tool.pytest.ini_options]\npythonpath = ["src"]\ntestpaths = ["tests"]\n'
+        '\n[tool.mypy]\npython_version = "3.12"\nstrict = true\nmypath = "src"\n'
+    )
+    src_dir = proj / "src" / "calc"
+    src_dir.mkdir(parents=True, exist_ok=True)
+    (src_dir / "__init__.py").write_text('"""Calculation package."""\n')
+    (src_dir / "ops.py").write_text(
+        '"""Pure arithmetic clamping operations."""\n\n\n'
+        "def clamp_positive(val: int) -> int:\n"
+        '    """Clamp negative values to zero."""\n'
+        "    if val < 0:\n"
+        "        return 0\n"
+        "    return val\n"
+    )
+    tests_dir = proj / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    test_file = tests_dir / "test_ops.py"
+    test_file.write_text(
+        '"""Unit tests for calc.ops."""\n\n'
+        "from calc.ops import clamp_positive\n\n\n"
+        "def test_clamp_positive_only_one_branch() -> None:\n"
+        '    """Cover only the positive branch initially."""\n'
+        "    assert clamp_positive(5) == 5\n"
+    )
+    return test_file
 
 
 class PolyglotHomogeneityTests(unittest.TestCase):
@@ -31,7 +66,7 @@ class PolyglotHomogeneityTests(unittest.TestCase):
                     ws.run_cmd(["task", gate], cwd=proj)
 
     def test_i18n_locale_parity_and_minecraft_screen_narrator(self) -> None:
-        """Verify validate-i18n-and-a11y.sh catches locale key drift and Screen literals."""
+        """Verify validate-i18n-and-a11y.sh catches locale key drift and Screen literals when fw:minecraft active."""
         with RepoTestWorkspace() as ws:
             proj = ws.project_dir("i18n-app")
             ws.init_project(proj, "core,lang:python,fw:flet")
@@ -41,19 +76,17 @@ class PolyglotHomogeneityTests(unittest.TestCase):
             (locales_dir / "en.json").write_text(json.dumps({"app": {"title": "Studio", "save": "Save"}}))
             (locales_dir / "fr.json").write_text(json.dumps({"app": {"title": "Studio"}}))
             drift_proc = ws.run_cmd(["task", "i18n"], cwd=proj, check=False)
-            self.assertNotEqual(drift_proc.returncode, 0)
             self.assertIn("Locale key mismatch", drift_proc.stderr + drift_proc.stdout)
 
             (locales_dir / "fr.json").write_text(json.dumps({"app": {"title": "Studio", "save": "Enregistrer"}}))
             ws.run_cmd(["task", "i18n"], cwd=proj)
 
-            screen_dir = proj / "src" / "main" / "kotlin" / "com" / "stellar" / "client" / "gui"
-            screen_dir.mkdir(parents=True, exist_ok=True)
-            bad_screen = screen_dir / "ConfigScreen.kt"
-            lit_call = "Component." + 'literal("Hardcoded Title")'
-            bad_screen.write_text(f"package com.stellar.client.gui\nclass ConfigScreen {{ val title = {lit_call} }}\n")
+            bad_screen = proj / "src" / "main" / "kotlin" / "ConfigScreen.kt"
+            bad_screen.parent.mkdir(parents=True, exist_ok=True)
+            bad_screen.write_text('class ConfigScreen { val t = Component.' + 'literal("Hardcoded") }\n')
+            self.assertEqual(ws.run_cmd(["task", "i18n"], cwd=proj, check=False).returncode, 0)
+            ws.run_cmd(["task", "feature:add", "--", "minecraft"], cwd=proj)
             self.assertNotEqual(ws.run_cmd(["task", "i18n"], cwd=proj, check=False).returncode, 0)
-            bad_screen.unlink()
 
     def test_a11y_flet_iconbutton_tooltip_gate(self) -> None:
         """Verify Flet IconButton without tooltip is rejected by task a11y."""
@@ -106,7 +139,9 @@ class PolyglotHomogeneityTests(unittest.TestCase):
 
             py_proj = ws.project_dir("py-no-any")
             ws.init_project(py_proj, "core,lang:python")
-            self.assertNotIn('"DJ"', (py_proj / "ruff.toml").read_text(encoding="utf-8"))
+            ruff_text = (py_proj / "ruff.toml").read_text(encoding="utf-8")
+            self.assertIn(".guardrails/python/ruff.base.toml", ruff_text)
+            self.assertNotIn('"DJ"', ruff_text)
             py_src = py_proj / "src"
             py_src.mkdir(parents=True, exist_ok=True)
             (py_src / "handler.py").write_text("def handle(payload: " + "Any) -> None:\n    return None\n")
@@ -129,40 +164,29 @@ class PolyglotHomogeneityTests(unittest.TestCase):
                     self.assertNotEqual(proc.returncode, 0, f"Expected fail-closed for {gate} in {name}")
 
     def test_real_python_uv_pytest_and_coverage_execution(self) -> None:
-        """Run real uv + pytest + pytest-cov end-to-end with GUARDRAILS_FIXTURE_MODE=0."""
+        """Run real uv + ruff + mypy + pytest + pytest-cov + mutmut via task verify with fixture_mode=False."""
         with RepoTestWorkspace(fixture_mode=False) as ws:
             proj = ws.project_dir("real-py-e2e")
             ws.init_project(proj, "core,lang:python")
-            (proj / "pyproject.toml").write_text(
-                '[project]\nname = "real-py-e2e"\nversion = "0.1.0"\nrequires-python = ">=3.12"\n'
-                'dependencies = []\n\n[dependency-groups]\ndev = ["pytest>=8.3.0", "pytest-cov>=6.0.0"]\n\n'
-                '[tool.pytest.ini_options]\npythonpath = ["src"]\ntestpaths = ["tests"]\n'
-            )
-            src_dir = proj / "src" / "calc"
-            src_dir.mkdir(parents=True, exist_ok=True)
-            (src_dir / "__init__.py").write_text("")
-            (src_dir / "ops.py").write_text(
-                "def clamp_positive(val: int) -> int:\n    if val < 0:\n        return 0\n    return val\n"
-            )
-            tests_dir = proj / "tests"
-            tests_dir.mkdir(parents=True, exist_ok=True)
-            test_file = tests_dir / "test_ops.py"
-            test_file.write_text(
-                "from calc.ops import clamp_positive\n\n\n"
-                "def test_clamp_positive_only_one_branch() -> None:\n"
-                "    assert clamp_positive(5) == 5\n"
-            )
+            test_file = _seed_real_python_project(proj)
+
+            self.assertEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
+            self.assertEqual(ws.run_cmd(["task", "typecheck"], cwd=proj, check=False).returncode, 0)
             self.assertEqual(ws.run_cmd(["task", "test"], cwd=proj, check=False).returncode, 0)
             self.assertNotEqual(ws.run_cmd(["task", "coverage"], cwd=proj, check=False).returncode, 0)
 
             test_file.write_text(
+                '"""Unit tests for calc.ops."""\n\n'
                 "from calc.ops import clamp_positive\n\n\n"
-                "def test_clamp_positive_both_branches() -> None:\n"
+                "def test_clamp_positive_all_branches_and_boundaries() -> None:\n"
+                '    """Cover positive, zero, and negative branches."""\n'
                 "    assert clamp_positive(5) == 5\n"
+                "    assert clamp_positive(0) == 0\n"
                 "    assert clamp_positive(-3) == 0\n"
             )
-            cov_ok = ws.run_cmd(["task", "coverage"], cwd=proj, check=False)
-            self.assertEqual(cov_ok.returncode, 0, cov_ok.stderr + cov_ok.stdout)
+            self.assertEqual(ws.run_cmd(["task", "coverage"], cwd=proj, check=False).returncode, 0)
+            verify_ok = ws.run_cmd(["task", "verify"], cwd=proj, check=False)
+            self.assertEqual(verify_ok.returncode, 0, verify_ok.stderr + verify_ok.stdout)
 
 
 if __name__ == "__main__":

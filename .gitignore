@@ -33,6 +33,7 @@ venv/
 .coverage.*
 htmlcov/
 .mutmut-cache/
+mutants/
 dist/
 build/
 *.egg-info/

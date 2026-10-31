@@ -8,6 +8,18 @@ _exclude:
   - ".git"
   - ".cache"
   - ".task"
+  - ".venv"
+  - "venv"
+  - ".guardrails"
+  - ".guardrails.lock"
+  - ".agents"
+  - "pyproject.toml"
+  - "uv.lock"
+  - "ruff.toml"
+  - "mise.toml"
+  - "lefthook.yml"
+  - "AGENTS.md"
+  - ".gitignore"
   - "copier.yml"
   - "README.md"
   - "modules"
@@ -32,25 +44,72 @@ primary_language:
     "Shell / Bash (shellcheck, shfmt, bash -n, set -euo pipefail, zero eval)": "lang:shell"
   default: "lang:ts"
 
-framework:
+framework_ts:
   type: str
-  help: "Framework sub-module (fw:<framework>)"
-  when: "{{ primary_language in ['lang:ts', 'lang:kotlin', 'lang:java', 'lang:python', 'lang:php'] }}"
+  help: "TypeScript framework module (fw:<framework>)"
+  when: "{{ primary_language == 'lang:ts' }}"
   choices:
-    "None (Pure language module)": "none"
+    "None (Pure TypeScript module)": "none"
     "React (Lock 2 i18n, Lock 4 Atomic Purity, WCAG 2.2 AA a11y, max 150 lines)": "fw:react"
     "React Router (inherits fw:react + route parsimony, loaders/actions)": "fw:react-router"
     "Astro (astro check, island architecture & a11y rules)": "fw:astro"
+  default: "fw:react"
+
+framework_jvm:
+  type: str
+  help: "JVM / Minecraft framework module (fw:<framework>)"
+  when: "{{ primary_language in ['lang:kotlin', 'lang:java'] }}"
+  choices:
+    "None (Pure JVM module)": "none"
     "Minecraft Base (fw:minecraft — Side separation, Mixin safety, GameTest, 1.21+ assets)": "fw:minecraft"
     "Quilt MC (fw:quilt — inherits fw:minecraft + Quilt Loom, quilt.mod.json, QKL)": "fw:quilt"
     "Fabric MC (fw:fabric — inherits fw:minecraft + Fabric Loom, fabric.mod.json, Fabric API)": "fw:fabric"
+    "Quilt + Fabric Dual-Loader (fw:quilt,fw:fabric)": "fw:quilt,fw:fabric"
+  default: "fw:quilt"
+
+fw_fabric_companion:
+  type: bool
+  help: "Also enable fw:fabric alongside fw:quilt (dual-loader setup)?"
+  when: "{{ primary_language in ['lang:kotlin', 'lang:java'] and framework_jvm == 'fw:quilt' }}"
+  default: false
+
+framework_python:
+  type: str
+  help: "Python primary UI / Web framework (fw:<framework>)"
+  when: "{{ primary_language == 'lang:python' }}"
+  choices:
+    "None (Pure Python module)": "none"
     "Flet MD3 (fw:flet — Flutter for Python, Material Design 3 tokens, 5-level Atomic Design)": "fw:flet"
     "NiceGUI (fw:nicegui — Reactive FastAPI/Vue Python UI, non-blocking async gates, User testing)": "fw:nicegui"
-    "LangChain / LangGraph (fw:langchain — LCEL, LangGraph StateGraph, Gemini, MCP, SecretStr)": "fw:langchain"
-    "Jupyter Lab / Notebook (fw:jupyter — uv reproducible notebooks, output stripping, nbmake)": "fw:jupyter"
     "Django 5.x+ (fw:django — Services/Selectors, Ruff DJ001/DJ008/DJ012, djLint, django-stubs, pytest-django)": "fw:django"
+  default: "none"
+
+fw_nicegui_companion:
+  type: bool
+  help: "Combine fw:nicegui alongside the selected Python framework?"
+  when: "{{ primary_language == 'lang:python' and framework_python not in ['none', 'fw:nicegui'] }}"
+  default: false
+
+fw_langchain:
+  type: bool
+  help: "Enable fw:langchain (LangChain LCEL, LangGraph StateGraph, Gemini, MCP, SecretStr)?"
+  when: "{{ primary_language == 'lang:python' }}"
+  default: false
+
+fw_jupyter:
+  type: bool
+  help: "Enable fw:jupyter (Jupyter Lab / Notebook — uv reproducible notebooks, output stripping, nbmake)?"
+  when: "{{ primary_language == 'lang:python' }}"
+  default: false
+
+framework_php:
+  type: str
+  help: "PHP framework module (fw:<framework>)"
+  when: "{{ primary_language == 'lang:php' }}"
+  choices:
+    "None (Pure PHP module)": "none"
     "Symfony 7.x+ (fw:symfony — Deptrac Hexagonal layers, Twig-CS-Fixer, PHPStan Symfony+Doctrine, Infection)": "fw:symfony"
-  default: "fw:react"
+  default: "fw:symfony"
 
 addon_design_system:
   type: bool
@@ -81,7 +140,7 @@ addon_ui_guardrails:
 addon_storybook:
   type: bool
   help: "Enable addon:storybook (100% CSF3 .stories.tsx coverage & CSF3 AST enforcement)?"
-  when: "{{ framework in ['fw:react', 'fw:react-router'] }}"
+  when: "{{ primary_language == 'lang:ts' and framework_ts in ['fw:react', 'fw:react-router'] }}"
   default: true
 
 addon_content_md:
@@ -117,4 +176,4 @@ _tasks:
     bash "{{ _copier_conf.src_path }}/modules/core/files/.guardrails/scripts/guardrails-cli.sh" init
     --target "."
     --source "{{ master_source }}"
-    --modules "core,{{ primary_language }}{% if framework and framework != 'none' %},{{ framework }}{% endif %}{% if addon_design_system %},addon:design-system{% endif %}{% if addon_testing_fortress %},addon:testing-fortress{% endif %}{% if addon_docker %},addon:docker{% endif %}{% if addon_ffmpeg %},addon:ffmpeg{% endif %}{% if addon_ui_guardrails %},addon:ui-guardrails{% endif %}{% if addon_storybook %},addon:storybook{% endif %}{% if addon_content_md %},addon:content-md{% endif %}{% if addon_cloudflare %},addon:cloudflare{% endif %}{% if addon_drizzle_d1 %},addon:drizzle-d1{% endif %}{% if addon_lib_exports %},addon:lib-exports{% endif %}"
+    --modules "core,{{ primary_language }}{% if primary_language == 'lang:ts' and framework_ts != 'none' %},{{ framework_ts }}{% endif %}{% if primary_language in ['lang:kotlin', 'lang:java'] and framework_jvm != 'none' %},{{ framework_jvm }}{% endif %}{% if fw_fabric_companion %},fw:fabric{% endif %}{% if primary_language == 'lang:python' and framework_python != 'none' %},{{ framework_python }}{% endif %}{% if fw_nicegui_companion %},fw:nicegui{% endif %}{% if fw_langchain %},fw:langchain{% endif %}{% if fw_jupyter %},fw:jupyter{% endif %}{% if primary_language == 'lang:php' and framework_php != 'none' %},{{ framework_php }}{% endif %}{% if addon_design_system %},addon:design-system{% endif %}{% if addon_testing_fortress %},addon:testing-fortress{% endif %}{% if addon_docker %},addon:docker{% endif %}{% if addon_ffmpeg %},addon:ffmpeg{% endif %}{% if addon_ui_guardrails %},addon:ui-guardrails{% endif %}{% if addon_storybook %},addon:storybook{% endif %}{% if addon_content_md %},addon:content-md{% endif %}{% if addon_cloudflare %},addon:cloudflare{% endif %}{% if addon_drizzle_d1 %},addon:drizzle-d1{% endif %}{% if addon_lib_exports %},addon:lib-exports{% endif %}"

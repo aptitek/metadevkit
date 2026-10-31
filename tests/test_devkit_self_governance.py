@@ -27,8 +27,8 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
     """Verify that metadevkit passes its own shell, python, and devkit gates."""
 
     def test_repository_passes_shell_python_and_devkit_validators(self) -> None:
-        """Run validate-shell.sh, validate-python.sh, and validate-devkit.sh on REPO_ROOT."""
-        with RepoTestWorkspace() as ws:
+        """Run validate-shell.sh, validate-python.sh, validate-devkit.sh, lint, and typecheck on REPO_ROOT."""
+        with RepoTestWorkspace(fixture_mode=False) as ws:
             shell_script = REPO_ROOT / "modules/lang/shell/files/.guardrails/scripts/validate-shell.sh"
             py_script = REPO_ROOT / "modules/lang/python/files/.guardrails/scripts/validate-python.sh"
             devkit_script = REPO_ROOT / "modules/addons/devkit/files/.guardrails/scripts/validate-devkit.sh"
@@ -36,6 +36,8 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             ws.run_cmd(["bash", str(shell_script), str(REPO_ROOT)], cwd=REPO_ROOT)
             ws.run_cmd(["bash", str(py_script), str(REPO_ROOT)], cwd=REPO_ROOT)
             ws.run_cmd(["bash", str(devkit_script), str(REPO_ROOT)], cwd=REPO_ROOT)
+            ws.run_cmd(["task", "lint"], cwd=REPO_ROOT)
+            ws.run_cmd(["task", "typecheck"], cwd=REPO_ROOT)
 
             self.assertEqual(
                 ws.read_manifest_modules(REPO_ROOT),

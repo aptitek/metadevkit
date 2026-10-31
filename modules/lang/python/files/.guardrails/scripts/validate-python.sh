@@ -51,7 +51,7 @@ while IFS= read -r -d '' py_file; do
     fi
   fi
 done < <(find "${ROOT_DIR}" \
-  -type d \( -name ".venv" -o -name "venv" -o -name "__pycache__" -o -name ".git" -o -name ".mypy_cache" -o -name ".ruff_cache" -o -name ".pytest_cache" -o -name "build" -o -name "dist" \) -prune \
+  -type d \( -name ".venv" -o -name "venv" -o -name "__pycache__" -o -name ".git" -o -name ".mypy_cache" -o -name ".ruff_cache" -o -name ".pytest_cache" -o -name "mutants" -o -name "build" -o -name "dist" \) -prune \
   -o -type f -name "*.py" -print0)
 
 if [[ "${ERRORS}" -gt 0 ]]; then

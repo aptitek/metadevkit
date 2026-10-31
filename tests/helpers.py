@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from types import TracebackType
@@ -30,11 +31,14 @@ class RepoTestWorkspace:
         symlink_path = self.bin_dir / "task"
         if not symlink_path.exists():
             symlink_path.symlink_to(Path(task_bin))
-        shared_env = Path(tempfile.gettempdir()) / "polyglot-guardrails-env"
-        shims = f"{shared_env / 'mise-data' / 'shims'}:{shared_env / 'bin'}"
-        self._env["PATH"] = f"{self.bin_dir}:{shims}:{self._env.get('PATH', '')}"
-        self._env["UV_CACHE_DIR"] = str(shared_env / "uv-cache")
-        self._env["UV_PYTHON"] = "/usr/bin/python3"
+        self._env["PATH"] = f"{self.bin_dir}:{self._env.get('PATH', '')}"
+        if not shutil.which("uv", path=self._env["PATH"]):
+            tmp_root = Path(tempfile.gettempdir())
+            mise_shims = tmp_root / "mise-data" / "shims"
+            self._env["MISE_DATA_DIR"] = str(tmp_root / "mise-data")
+            self._env["PATH"] = f"{mise_shims}:{self._env['PATH']}"
+            self._env.setdefault("UV_CACHE_DIR", str(tmp_root / "uv-cache"))
+        self._env["UV_PYTHON"] = sys.executable
         self._env["UV_LINK_MODE"] = "copy"
         self._env["GUARDRAILS_SKIP_SELFTEST"] = "1"
         self._env["GUARDRAILS_FIXTURE_MODE"] = "1" if fixture_mode else "0"

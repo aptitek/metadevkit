@@ -1,0 +1,48 @@
+# =============================================================================
+# ruff.base.toml — Base Python Linter & Formatter Configuration (lang:python)
+# Enforces Geranium Quality Gates: McCabe <= 8, max-statements <= 20, line <= 120
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+line-length = 120
+target-version = "py312"
+extend-exclude = ["modules"]
+
+[lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # Pyflakes
+  "I",   # isort
+  "C90", # McCabe cyclomatic complexity
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "A",   # flake8-builtins
+  "C4",  # flake8-comprehensions
+  "SIM", # flake8-simplify
+  "PL",  # Pylint (structural limits & code smells)
+  "RUF", # Ruff-specific rules
+  "S",   # flake8-bandit security rules
+]
+ignore = []
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "PLR2004", "S603"]
+
+[lint.mccabe]
+# Strict cyclomatic complexity threshold
+max-complexity = 8
+
+[lint.pylint]
+# Strict function & branching modularity thresholds
+max-statements = 20
+max-args = 5
+max-branches = 8
+max-returns = 4
+
+[lint.isort]
+known-first-party = ["app", "src"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

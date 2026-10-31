@@ -1,0 +1,7 @@
+{
+  "dirs": ["simulations"],
+  "testInclude": ["simulations/**/*.{test,spec}.{ts,tsx}"],
+  "coverageInclude": ["simulations/**/*.{ts,tsx}"],
+  "coverageExclude": ["src/content.config.ts"],
+  "mutate": ["simulations/**/*.ts", "simulations/**/*.tsx"]
+}

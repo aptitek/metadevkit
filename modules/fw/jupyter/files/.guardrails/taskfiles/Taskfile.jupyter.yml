@@ -20,9 +20,9 @@ tasks:
       - bash .guardrails/scripts/validate-jupyter.sh --strip .
       - |
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
-          uv run ruff format {{.STAGED_FILES | default "."}}
+          uv run ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         elif command -v ruff >/dev/null 2>&1; then
-          ruff format {{.STAGED_FILES | default "."}}
+          ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         fi
 
   lint:
@@ -31,9 +31,9 @@ tasks:
       - bash .guardrails/scripts/validate-jupyter.sh .
       - |
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
-          uv run ruff check {{.STAGED_FILES | default "."}}
+          uv run ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         elif command -v ruff >/dev/null 2>&1; then
-          ruff check {{.STAGED_FILES | default "."}}
+          ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         fi
 
   test:

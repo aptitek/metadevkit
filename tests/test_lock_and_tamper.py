@@ -13,8 +13,10 @@ class LockAndTamperTests(unittest.TestCase):
     def test_lock_verification_and_illegal_tamper_detection(self) -> None:
         """Verify guard:check blocks manual edits to eslint.config.mjs and guard:sync heals."""
         with RepoTestWorkspace() as ws:
+            self.assertTrue(ws.root.is_dir())
             proj = ws.project_dir("lock-app")
             ws.init_project(proj, "core,lang:ts,fw:react")
+            self.assertIn("fw:react", ws.read_manifest_modules(proj))
             ws.run_cmd(["task", "guard:check"], cwd=proj)
 
             eslint_cfg = proj / "eslint.config.mjs"

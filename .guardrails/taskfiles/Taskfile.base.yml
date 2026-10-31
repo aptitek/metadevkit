@@ -6,15 +6,6 @@ version: '3'
 
 run: once
 
-env:
-  MISE_DATA_DIR: '{{.MISE_DATA_DIR | default "/tmp/polyglot-guardrails-env/mise-data"}}'
-  MISE_CACHE_DIR: '{{.MISE_CACHE_DIR | default "/tmp/polyglot-guardrails-env/mise-cache"}}'
-  MISE_STATE_DIR: '{{.MISE_STATE_DIR | default "/tmp/polyglot-guardrails-env/mise-state"}}'
-  UV_CACHE_DIR: '{{.UV_CACHE_DIR | default "/tmp/polyglot-guardrails-env/uv-cache"}}'
-  UV_PYTHON_INSTALL_DIR: '{{.UV_PYTHON_INSTALL_DIR | default "/tmp/polyglot-guardrails-env/uv-python"}}'
-  UV_PYTHON: '{{.UV_PYTHON | default "/usr/bin/python3"}}'
-  UV_LINK_MODE: '{{.UV_LINK_MODE | default "copy"}}'
-
 vars:
   STAGED_FILES: '{{.STAGED_FILES | default ""}}'
 
@@ -59,7 +50,7 @@ tasks:
     cmds:
       - task: guard:check
       - |
-        mkdir -p .cache /tmp/polyglot-guardrails-env/bin
+        mkdir -p .cache
         if command -v mise >/dev/null 2>&1; then
           mise trust -a || true
           mise install || true

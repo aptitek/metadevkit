@@ -3,6 +3,13 @@
 // Outputs unified mutation-testing-elements JSON schema (reports/mutation/mutation.json)
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+import fs from "node:fs";
+
+const contentPathsFile = new URL("./.guardrails/content-md/paths.json", import.meta.url);
+const contentPaths = fs.existsSync(contentPathsFile)
+  ? JSON.parse(fs.readFileSync(contentPathsFile, "utf-8"))
+  : {};
+
 export default {
   packageManager: "pnpm",
   reporters: ["clear-text", "progress", "html", "json"],
@@ -16,8 +23,7 @@ export default {
   mutate: [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "simulations/**/*.ts",
-    "simulations/**/*.tsx",
+    ...(contentPaths.mutate ?? []),
     "!**/*.test.ts",
     "!**/*.test.tsx",
     "!**/*.spec.ts",

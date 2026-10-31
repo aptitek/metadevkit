@@ -1,48 +1,15 @@
 # =============================================================================
 # ruff.toml — Strict Python + Django Linter Configuration (fw:django)
-# Enforces Geranium Quality Gates + flake8-django (DJ001, DJ008, DJ012)
+# Extends .guardrails/python/ruff.base.toml with flake8-django (DJ001, DJ008, DJ012)
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
-line-length = 120
-target-version = "py312"
+extend = ".guardrails/python/ruff.base.toml"
 cache-dir = ".cache/ruff"
 
 [lint]
-select = [
-  "E",   # pycodestyle errors
-  "W",   # pycodestyle warnings
-  "F",   # Pyflakes
-  "I",   # isort
-  "C90", # McCabe cyclomatic complexity
-  "N",   # pep8-naming
-  "UP",  # pyupgrade
-  "B",   # flake8-bugbear
-  "A",   # flake8-builtins
-  "C4",  # flake8-comprehensions
-  "SIM", # flake8-simplify
-  "PL",  # Pylint (structural limits & code smells)
-  "RUF", # Ruff-specific rules
-  "S",   # flake8-bandit security rules
-  "DJ",  # flake8-django rules (DJ001, DJ008, DJ012)
+extend-select = [
+  "DJ", # flake8-django rules (DJ001, DJ008, DJ012)
 ]
-ignore = []
 
-[lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "PLR2004", "S603"]
+[lint.extend-per-file-ignores]
 "*/migrations/*.py" = ["DJ001", "E501"]
-
-[lint.mccabe]
-max-complexity = 8
-
-[lint.pylint]
-max-statements = 20
-max-args = 5
-max-branches = 8
-max-returns = 4
-
-[lint.isort]
-known-first-party = ["app", "src"]
-
-[format]
-quote-style = "double"
-indent-style = "space"
