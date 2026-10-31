@@ -1,0 +1,4 @@
+# --- Module: fw:minecraft ---
+run/
+.loom/
+remappedSrc/

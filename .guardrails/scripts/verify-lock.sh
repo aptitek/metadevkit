@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # polyglot-guardrails — Configuration Anti-Tamper & Lock Verifier
+# Master Source: modules/core/files/.guardrails/scripts/verify-lock.sh
 # Executed automatically by `task guard:check`, `task verify`, and `pre-commit`
 # =============================================================================
 set -euo pipefail
@@ -43,7 +44,6 @@ checked_count=0
 declare -A locked_paths=()
 
 while IFS= read -r line || [[ -n "$line" ]]; do
-  # Skip comments and empty lines
   [[ -z "$line" || "$line" =~ ^# ]] && continue
 
   expected_hash="${line%%  *}"

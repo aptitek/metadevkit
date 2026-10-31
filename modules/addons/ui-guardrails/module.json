@@ -1,0 +1,6 @@
+{
+  "id": "addon:ui-guardrails",
+  "layer": "addon",
+  "depends_on": ["core"],
+  "description": "Cross-Language UI Localization & Accessibility Fortress: 100% locale JSON key parity, WCAG 2.2 AA JSX/Astro/Twig/Django checks, Flet/NiceGUI semantic labels & tooltips, and Minecraft Screen Narrator enforcement"
+}

@@ -26,6 +26,12 @@ class PolyglotHomogeneityTests(unittest.TestCase):
                 proj = ws.project_dir(name)
                 ws.init_project(proj, modules_csv)
                 self.assertTrue((proj / expected_cfg).is_file(), f"Missing {expected_cfg} in {name}")
+                if "lang:ts" in modules_csv:
+                    self.assertTrue((proj / "playwright.config.ts").is_file())
+                    self.assertTrue((proj / "stryker.config.mjs").is_file())
+                else:
+                    self.assertFalse((proj / "playwright.config.ts").exists())
+                    self.assertFalse((proj / "stryker.config.mjs").exists())
                 for gate in ("typecheck", "a11y", "i18n", "coverage", "mutate", "verify"):
                     ws.run_cmd(["task", gate], cwd=proj)
 

@@ -1,0 +1,6 @@
+{
+  "id": "addon:docker",
+  "layer": "addon",
+  "depends_on": ["core"],
+  "description": "Docker & Compose Security Fortress: multi-stage builds, pinned image tags (bans :latest), non-root USER enforcement, and /run/secrets tmpfs secret injection"
+}

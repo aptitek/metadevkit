@@ -16,17 +16,17 @@ tasks:
         fi
 
   format:
-    desc: "Format Java sources using Spotless"
+    desc: "Format Java sources using Spotless (with Gradle build & configuration cache)"
     cmds:
       - |
         if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
           if ./gradlew tasks --all 2>/dev/null | grep -q "spotlessApply"; then
-            ./gradlew spotlessApply --console=plain
+            ./gradlew spotlessApply --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 
   lint:
-    desc: "Check Java formatting, Checkstyle, PMD, and AST hygiene rules"
+    desc: "Check Java formatting, Checkstyle, PMD, and AST hygiene rules (cached)"
     cmds:
       - |
         if [ -d src ]; then
@@ -44,24 +44,24 @@ tasks:
         if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
           TASKS_LIST="$(./gradlew tasks --all 2>/dev/null || true)"
           if echo "$TASKS_LIST" | grep -q "spotlessCheck"; then
-            ./gradlew spotlessCheck --console=plain
+            ./gradlew spotlessCheck --build-cache --configuration-cache --parallel --console=plain
           fi
           if echo "$TASKS_LIST" | grep -q "checkstyleMain"; then
-            ./gradlew checkstyleMain --console=plain
+            ./gradlew checkstyleMain --build-cache --configuration-cache --parallel --console=plain
           fi
           if echo "$TASKS_LIST" | grep -q "pmdMain"; then
-            ./gradlew pmdMain --console=plain
+            ./gradlew pmdMain --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 
   test:
-    desc: "Run JUnit 5 tests and JaCoCo coverage report"
+    desc: "Run JUnit 5 tests and JaCoCo coverage report (with Gradle build cache)"
     cmds:
       - |
         if [ -f ./gradlew ] && ([ -f build.gradle ] || [ -f build.gradle.kts ]); then
-          ./gradlew test --console=plain
+          ./gradlew test --build-cache --configuration-cache --parallel --console=plain
           if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestReport"; then
-            ./gradlew jacocoTestReport --console=plain
+            ./gradlew jacocoTestReport --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 

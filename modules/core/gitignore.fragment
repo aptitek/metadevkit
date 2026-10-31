@@ -1,0 +1,15 @@
+# --- Module: core ---
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*~
+.env
+.env.*
+!.env.example
+!.env.template
+tmp/
+reports/
+.cache/
+.task/

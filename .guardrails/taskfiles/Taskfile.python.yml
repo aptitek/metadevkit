@@ -1,6 +1,6 @@
 # =============================================================================
 # Taskfile.python.yml — Python Module Tasks (lang:python)
-# Tools: uv, ruff, mypy, radon, vulture, pytest / unittest
+# Tools: uv, ruff (.cache/ruff), mypy (.cache/mypy), radon, vulture, pytest
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 version: '3'
@@ -10,34 +10,37 @@ tasks:
     desc: "Synchronize Python environment using uv"
     cmds:
       - |
+        mkdir -p .cache
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
           uv sync
         fi
 
   format:
-    desc: "Format Python files with ruff"
+    desc: "Format Python files with ruff (cached)"
     cmds:
       - |
+        mkdir -p .cache/ruff
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
-          uv run ruff format {{.STAGED_FILES | default "."}}
+          uv run ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         elif command -v ruff >/dev/null 2>&1; then
-          ruff format {{.STAGED_FILES | default "."}}
+          ruff format --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         fi
 
   lint:
-    desc: "Lint Python code (validate-python.sh + ruff + mypy + radon + vulture)"
+    desc: "Lint Python code (validate-python.sh + ruff + mypy + radon + vulture with .cache/)"
     cmds:
       - bash .guardrails/scripts/validate-python.sh .
       - |
+        mkdir -p .cache/ruff .cache/mypy
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run ruff --version >/dev/null 2>&1; then
-          uv run ruff check {{.STAGED_FILES | default "."}}
+          uv run ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         elif command -v ruff >/dev/null 2>&1; then
-          ruff check {{.STAGED_FILES | default "."}}
+          ruff check --cache-dir=.cache/ruff {{.STAGED_FILES | default "."}}
         fi
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run mypy --version >/dev/null 2>&1; then
-          uv run mypy .
+          uv run mypy --cache-dir=.cache/mypy --sqlite-cache .
         elif command -v mypy >/dev/null 2>&1 && [ -d src ]; then
-          mypy src
+          mypy --cache-dir=.cache/mypy --sqlite-cache src
         fi
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run radon --version >/dev/null 2>&1; then
           uv run radon cc . -a -s
@@ -47,29 +50,33 @@ tasks:
         fi
 
   test:
-    desc: "Run Python test suite via uv pytest (or python3 unittest fallback)"
+    desc: "Run Python test suite with parallel workers and incremental cache"
     cmds:
       - |
         if [ "${GUARDRAILS_SKIP_SELFTEST:-0}" = "1" ]; then
           exit 0
         fi
-        if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
-          uv run pytest
+        mkdir -p .cache/pytest .cache/unittest
+        if [ -f tests/run_parallel.py ] && command -v python3 >/dev/null 2>&1; then
+          python3 ./tests/run_parallel.py
+        elif [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
+          uv run pytest -o cache_dir=.cache/pytest
         elif command -v pytest >/dev/null 2>&1 && [ -d tests ]; then
-          pytest
+          pytest -o cache_dir=.cache/pytest
         elif command -v python3 >/dev/null 2>&1 && [ -d tests ]; then
           python3 -m unittest discover -s tests -v
         fi
 
   typecheck:
-    desc: "Run strict Python static typecheck (mypy --strict + zero-Any gate)"
+    desc: "Run strict Python static typecheck (mypy --strict --sqlite-cache + zero-Any gate)"
     cmds:
       - bash .guardrails/scripts/validate-python.sh .
       - |
+        mkdir -p .cache/mypy
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run mypy --version >/dev/null 2>&1; then
-          uv run mypy .
+          uv run mypy --cache-dir=.cache/mypy --sqlite-cache .
         elif command -v mypy >/dev/null 2>&1 && [ -d src ]; then
-          mypy src
+          mypy --cache-dir=.cache/mypy --sqlite-cache src
         else
           echo "[lang:python] Verified strict mypy and zero-Any typecheck gate."
         fi
@@ -83,7 +90,7 @@ tasks:
           exit 1
         fi
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --help 2>/dev/null | grep -q -- "--cov" && [ -d src ]; then
-          uv run pytest --cov=src --cov-branch --cov-fail-under=90
+          uv run pytest -o cache_dir=.cache/pytest --cov=src --cov-branch --cov-fail-under=90
         else
           echo "[lang:python] Verified .guardrails/python/coverage.toml (branch = true, fail_under = 90%)."
         fi

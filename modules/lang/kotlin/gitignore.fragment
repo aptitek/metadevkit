@@ -1,0 +1,7 @@
+# --- Module: lang:kotlin ---
+.gradle/
+build/
+out/
+*.class
+*.jar
+.kotlin/

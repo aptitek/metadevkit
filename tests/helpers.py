@@ -62,7 +62,7 @@ class RepoTestWorkspace:
 
     def init_project(self, target: Path, modules_csv: str) -> subprocess.CompletedProcess[str]:
         """Initialize a target project with the specified comma-separated modules."""
-        cli_script = REPO_ROOT / "scripts" / "guardrails-cli.sh"
+        cli_script = REPO_ROOT / "modules" / "core" / "files" / ".guardrails" / "scripts" / "guardrails-cli.sh"
         return self.run_cmd(
             [
                 "bash",

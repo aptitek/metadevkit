@@ -65,6 +65,15 @@ includes:
   devkit:
     taskfile: ./.guardrails/taskfiles/Taskfile.devkit.yml
     optional: true
+  docker:
+    taskfile: ./.guardrails/taskfiles/Taskfile.docker.yml
+    optional: true
+  ffmpeg:
+    taskfile: ./.guardrails/taskfiles/Taskfile.ffmpeg.yml
+    optional: true
+  ui-guardrails:
+    taskfile: ./.guardrails/taskfiles/Taskfile.ui-guardrails.yml
+    optional: true
   cloudflare:
     taskfile: ./.guardrails/taskfiles/Taskfile.cloudflare.yml
     optional: true

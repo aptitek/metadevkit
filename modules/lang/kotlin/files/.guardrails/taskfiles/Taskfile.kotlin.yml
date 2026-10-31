@@ -16,17 +16,17 @@ tasks:
         fi
 
   format:
-    desc: "Format Kotlin sources using Detekt autoCorrect (detekt-formatting)"
+    desc: "Format Kotlin sources using Detekt autoCorrect (with Gradle build cache)"
     cmds:
       - |
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
           if ./gradlew tasks --all 2>/dev/null | grep -q "detekt"; then
-            ./gradlew detekt --auto-correct --console=plain
+            ./gradlew detekt --auto-correct --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 
   lint:
-    desc: "Run Detekt static analysis (maxIssues: 0, warningsAsErrors: true) and Kotlin AST checks"
+    desc: "Run Detekt static analysis (maxIssues: 0, warningsAsErrors: true, cached) and Kotlin AST checks"
     cmds:
       - |
         if [ ! -f detekt.yml ]; then
@@ -55,18 +55,18 @@ tasks:
         fi
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
           if ./gradlew tasks --all 2>/dev/null | grep -q "detekt"; then
-            ./gradlew detekt --console=plain
+            ./gradlew detekt --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 
   test:
-    desc: "Run Kotest / JUnit 5 suites and JaCoCo coverage report"
+    desc: "Run Kotest / JUnit 5 suites and JaCoCo coverage report (with Gradle build cache)"
     cmds:
       - |
         if [ -f ./gradlew ] && ([ -f build.gradle.kts ] || [ -f build.gradle ]); then
-          ./gradlew test --console=plain
+          ./gradlew test --build-cache --configuration-cache --parallel --console=plain
           if ./gradlew tasks --all 2>/dev/null | grep -q "jacocoTestReport"; then
-            ./gradlew jacocoTestReport --console=plain
+            ./gradlew jacocoTestReport --build-cache --configuration-cache --parallel --console=plain
           fi
         fi
 

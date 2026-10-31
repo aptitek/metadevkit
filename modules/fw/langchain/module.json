@@ -1,6 +1,6 @@
 {
   "id": "fw:langchain",
   "layer": "fw",
-  "description": "LangChain + LangGraph + Google GenAI + MCP + Google Cloud TTS orchestration stack enforcing LCEL/StateGraph, SecretStr hygiene, and mocked LLM tests",
-  "depends_on": ["core", "lang:python"]
+  "depends_on": ["core", "lang:python"],
+  "description": "LangChain LCEL, LangGraph StateGraph, Gemini (langchain-google-genai), and Model Context Protocol (MCP) AI orchestration stack with SecretStr hygiene and 100% mocked external LLM tests"
 }

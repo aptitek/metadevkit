@@ -23,21 +23,22 @@ tasks:
         fi
 
   format:
-    desc: "Format TypeScript & project files via Prettier and ESLint"
+    desc: "Format TypeScript & project files via Prettier and ESLint (with incremental cache)"
     cmds:
       - |
         if [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          mkdir -p .cache
           if [ -n "{{.STAGED_FILES}}" ]; then
-            pnpm exec eslint --fix {{.STAGED_FILES}} || true
-            pnpm exec prettier --write {{.STAGED_FILES}} || true
+            pnpm exec eslint --cache --cache-location .cache/eslint/ --fix {{.STAGED_FILES}} || true
+            pnpm exec prettier --cache --cache-location .cache/prettier --write {{.STAGED_FILES}} || true
           else
-            pnpm exec eslint --fix . || true
-            pnpm exec prettier --write . || true
+            pnpm exec eslint --cache --cache-location .cache/eslint/ --fix . || true
+            pnpm exec prettier --cache --cache-location .cache/prettier --write . || true
           fi
         fi
 
   lint:
-    desc: "Run strict tsc, ESLint flat config, Knip, Dependency Cruiser, and Deprecated Deps check"
+    desc: "Run strict tsc (incremental), ESLint (cached), Knip, Dependency Cruiser, and Deprecated Deps check"
     cmds:
       - |
         if command -v node >/dev/null 2>&1; then
@@ -45,11 +46,12 @@ tasks:
         fi
       - |
         if [ -f package.json ] && [ -d node_modules ] && command -v pnpm >/dev/null 2>&1; then
-          pnpm exec tsc --noEmit
+          mkdir -p .cache
+          pnpm exec tsc --noEmit --incremental --tsBuildInfoFile .cache/tsbuildinfo.json
           if [ -n "{{.STAGED_FILES}}" ]; then
-            pnpm exec eslint --max-warnings=0 {{.STAGED_FILES}}
+            pnpm exec eslint --cache --cache-location .cache/eslint/ --max-warnings=0 {{.STAGED_FILES}}
           else
-            pnpm exec eslint --max-warnings=0 .
+            pnpm exec eslint --cache --cache-location .cache/eslint/ --max-warnings=0 .
           fi
           pnpm exec knip --config knip.json
           if [ -d src ]; then

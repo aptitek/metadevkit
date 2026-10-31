@@ -1,0 +1,8 @@
+# --- Module: lang:java ---
+.gradle/
+build/
+out/
+*.class
+*.jar
+*.war
+hs_err_pid*

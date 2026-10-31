@@ -11,7 +11,7 @@ commit-msg:
         MSG_FILE="{1}"
         if [ -f "$MSG_FILE" ]; then
           HEADER=$(head -n 1 "$MSG_FILE")
-          if ! echo "$HEADER" | grep -E -q '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\((ui|tokens|routes|db|i18n|ci|lint|theme|worker|test|docs|deps|config|security|a11y|storybook)\): .{15,85}$'; then
+          if ! echo "$HEADER" | grep -E -q '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\((ui|tokens|routes|db|i18n|ci|lint|theme|worker|test|tests|docs|deps|config|security|a11y|storybook|guardrails|scripts)\): .{15,85}$'; then
             echo "[COMMITLINT ERROR] Commit message must match '<type>(<scope>): <subject (>= 15 chars)>' with an allowed architectural scope." >&2
             exit 1
           fi

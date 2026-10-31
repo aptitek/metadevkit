@@ -1,0 +1,16 @@
+# --- Module: lang:python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mutmut-cache/
+dist/
+build/
+*.egg-info/

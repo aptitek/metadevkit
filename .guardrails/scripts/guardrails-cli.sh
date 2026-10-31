@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # polyglot-guardrails — Module Composition, Synchronization & Lock CLI
+# Master Source: modules/core/files/.guardrails/scripts/guardrails-cli.sh
 # Commands:
 #   init        --target <dir> --source <path|url> --modules <m1,m2,...>
 #   sync        [--target <dir>] [--source <path|url>]
@@ -13,7 +14,6 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
 NC='\033[0m'
 
 compute_sha256() {
@@ -28,7 +28,19 @@ compute_sha256() {
   fi
 }
 
-# Normalize module shorthand or full identifier into canonical ID
+find_master_root() {
+  local dir
+  dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "${dir}/modules/core/module.json" ]]; then
+      echo "$dir"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
 normalize_module_id() {
   local raw="$1"
   case "$raw" in
@@ -52,6 +64,9 @@ normalize_module_id() {
     symfony|symphony|fw:symfony|fw:symphony) echo "fw:symfony" ;;
     django|fw:django) echo "fw:django" ;;
     devkit|meta-devkit|guardrails|addon:devkit|addons:devkit|fw:devkit) echo "addon:devkit" ;;
+    docker|addon:docker|addons:docker) echo "addon:docker" ;;
+    ffmpeg|addon:ffmpeg|addons:ffmpeg) echo "addon:ffmpeg" ;;
+    ui-guardrails|ui|i18n|a11y|addon:ui-guardrails|addons:ui-guardrails) echo "addon:ui-guardrails" ;;
     cloudflare|addon:cloudflare|addons:cloudflare) echo "addon:cloudflare" ;;
     design-system|addon:design-system|addons:design-system) echo "addon:design-system" ;;
     testing-fortress|addon:testing-fortress|addons:testing-fortress) echo "addon:testing-fortress" ;;
@@ -61,13 +76,11 @@ normalize_module_id() {
     lib-exports|addon:lib-exports|addons:lib-exports) echo "addon:lib-exports" ;;
     *)
       echo -e "${RED}[GUARDRAILS ERROR] Unknown module identifier: '${raw}'${NC}" >&2
-      echo "Supported modules: core, lang:ts, lang:python, lang:java, lang:kotlin, lang:php, lang:shell, fw:react, fw:react-router, fw:astro, fw:minecraft, fw:quilt, fw:fabric, fw:flet, fw:nicegui, fw:langchain, fw:jupyter, addon:devkit, addon:cloudflare, addon:design-system, addon:testing-fortress, addon:storybook, addon:content-md, addon:drizzle-d1, addon:lib-exports" >&2
       return 1
       ;;
   esac
 }
 
-# Convert canonical module ID to relative path inside polyglot-guardrails
 module_rel_dir() {
   local mod_id="$1"
   case "$mod_id" in
@@ -82,7 +95,6 @@ module_rel_dir() {
   esac
 }
 
-# Resolve dependency graph and topological ordering for a list of modules
 resolve_modules() {
   local master_dir="$1"
   shift
@@ -105,7 +117,6 @@ resolve_modules() {
       return 1
     fi
 
-    # Visit dependencies first
     local dep
     while IFS= read -r dep; do
       [[ -z "$dep" ]] && continue
@@ -116,7 +127,6 @@ resolve_modules() {
     resolved+=("$mod_id")
   }
 
-  # Core is always first
   visit_module "core"
   for req in "${requested[@]}"; do
     [[ -z "$req" ]] && continue
@@ -126,7 +136,6 @@ resolve_modules() {
   printf '%s\n' "${resolved[@]}"
 }
 
-# Resolve master source (local path or git URL) into a local directory path
 resolve_source_dir() {
   local source_spec="$1"
   if [[ -d "$source_spec" ]]; then
@@ -153,6 +162,7 @@ generate_lockfile() {
   local target_dir="$1"
   local lock_file="${target_dir}/.guardrails.lock"
   local -a CandidateFiles=(
+    ".gitignore"
     "Taskfile.yml"
     "mise.toml"
     "lefthook.yml"
@@ -203,7 +213,6 @@ generate_lockfile() {
     done < <(find "${target_dir}/.agents" -type f -print0)
   fi
 
-  # Sort deterministically
   mapfile -t sorted_files < <(printf '%s\n' "${existing_files[@]}" | LC_ALL=C sort -u)
 
   {
@@ -235,8 +244,9 @@ apply_modules() {
 
   echo -e "${BLUE}[GUARDRAILS] Synchronizing modules: ${active_modules[*]}${NC}"
 
-  # Clean and recreate managed .guardrails and .agents subfolders before populating
-  mkdir -p \
+  # Clean and recreate managed .guardrails and .agents subfolders before populating.
+  # Unlinking .guardrails/scripts/* first ensures running scripts keep their old FD cleanly.
+  rm -rf \
     "${target_dir}/.guardrails/ast" \
     "${target_dir}/.guardrails/eslint" \
     "${target_dir}/.guardrails/java" \
@@ -246,15 +256,22 @@ apply_modules() {
     "${target_dir}/.guardrails/scripts" \
     "${target_dir}/.agents/rules" \
     "${target_dir}/.agents/skills"
-  rm -rf \
-    "${target_dir}/.guardrails/ast/"* \
-    "${target_dir}/.guardrails/eslint/"* \
-    "${target_dir}/.guardrails/java/"* \
-    "${target_dir}/.guardrails/kotlin/"* \
-    "${target_dir}/.guardrails/python/"* \
-    "${target_dir}/.guardrails/taskfiles/"* \
-    "${target_dir}/.agents/rules/"* \
-    "${target_dir}/.agents/skills/"*
+  mkdir -p \
+    "${target_dir}/.guardrails/ast" \
+    "${target_dir}/.guardrails/taskfiles" \
+    "${target_dir}/.guardrails/scripts" \
+    "${target_dir}/.agents/rules" \
+    "${target_dir}/.agents/skills"
+
+  # Remove TS-only root configs if lang:ts is not active
+  if ! printf '%s\n' "${active_modules[@]}" | grep -qx "lang:ts"; then
+    rm -f \
+      "${target_dir}/playwright.config.ts" \
+      "${target_dir}/stryker.config.mjs" \
+      "${target_dir}/commitlint.config.mjs" \
+      "${target_dir}/.secretlintrc.json" \
+      "${target_dir}/.jscpd.json"
+  fi
 
   # Compose mise.toml header
   local mise_file="${target_dir}/mise.toml"
@@ -266,7 +283,24 @@ apply_modules() {
     echo "[tools]"
   } > "$mise_file"
 
-  # Copy files and mise fragments for each module in dependency order
+  # Compose .gitignore header
+  local gitignore_file="${target_dir}/.gitignore"
+  {
+    echo "# ============================================================================="
+    echo "# .gitignore — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)"
+    echo "# Active modules: ${active_modules[*]}"
+    echo "# For project-specific ignore rules, create '.gitignore.local'."
+    echo "# ============================================================================="
+  } > "$gitignore_file"
+
+  local has_ts=0
+  if printf '%s\n' "${active_modules[@]}" | grep -qx "lang:ts"; then
+    has_ts=1
+  fi
+
+  local needs_ui_validator=0
+
+  # Copy files, mise fragments, and gitignore fragments ONLY for active modules in dependency order
   for mod_id in "${active_modules[@]}"; do
     local rel_dir
     rel_dir="$(module_rel_dir "$mod_id")"
@@ -277,36 +311,38 @@ apply_modules() {
       cat "${mod_path}/mise.fragment.toml" >> "$mise_file"
     fi
 
+    if [[ -f "${mod_path}/gitignore.fragment" ]]; then
+      echo "" >> "$gitignore_file"
+      cat "${mod_path}/gitignore.fragment" >> "$gitignore_file"
+    fi
+
     if [[ -d "${mod_path}/files" ]]; then
       cp -R "${mod_path}/files/." "${target_dir}/"
     fi
-  done
 
-  # Synchronize centralized AST rules (universal + module-specific)
-  cp "${master_dir}/rules/ast/no-linter-bypass.yml" "${target_dir}/.guardrails/ast/"
-  cp "${master_dir}/rules/ast/architecture-boundaries.yml" "${target_dir}/.guardrails/ast/"
-
-  for mod_id in "${active_modules[@]}"; do
-    local short_name="${mod_id#*:}"
-    if [[ -f "${master_dir}/rules/ast/${short_name}.yml" ]]; then
-      cp "${master_dir}/rules/ast/${short_name}.yml" "${target_dir}/.guardrails/ast/"
+    # Copy TypeScript-specific testing-fortress overlay ONLY when lang:ts is active
+    if [[ "${mod_id}" == "addon:testing-fortress" && "${has_ts}" -eq 1 && -d "${mod_path}/ts-files" ]]; then
+      cp -R "${mod_path}/ts-files/." "${target_dir}/"
     fi
+
+    case "${mod_id}" in
+      fw:react|fw:react-router|fw:astro|fw:flet|fw:nicegui|fw:minecraft|fw:quilt|fw:fabric|fw:symfony|fw:django|addon:ui-guardrails)
+        needs_ui_validator=1
+        ;;
+    esac
   done
 
-  # When addon:devkit is active on a meta-devkit repository (containing modules/),
-  # synchronize the entire skill catalog & AST rule library for 100% parity
-  if [[ -d "${target_dir}/modules" ]] && printf '%s\n' "${active_modules[@]}" | grep -qx "addon:devkit"; then
-    while IFS= read -r -d '' mod_skills_dir; do
-      cp -R "${mod_skills_dir}/." "${target_dir}/.agents/skills/"
-    done < <(find "${master_dir}/modules" -type d -path "*/files/.agents/skills" -print0)
-    cp "${master_dir}/rules/ast/"*.yml "${target_dir}/.guardrails/ast/"
+  if [[ "${needs_ui_validator}" -eq 1 && ! -f "${target_dir}/.guardrails/scripts/validate-i18n-and-a11y.sh" ]]; then
+    cp "${master_dir}/modules/addons/ui-guardrails/files/.guardrails/scripts/validate-i18n-and-a11y.sh" \
+      "${target_dir}/.guardrails/scripts/validate-i18n-and-a11y.sh"
   fi
 
-  # Synchronize internal scripts atomically via mv to avoid mutating an open Bash FD
-  cp "${master_dir}/scripts/verify-lock.sh" "${target_dir}/.guardrails/scripts/verify-lock.sh.tmp"
-  mv -f "${target_dir}/.guardrails/scripts/verify-lock.sh.tmp" "${target_dir}/.guardrails/scripts/verify-lock.sh"
-  cp "${master_dir}/scripts/guardrails-cli.sh" "${target_dir}/.guardrails/scripts/guardrails-cli.sh.tmp"
-  mv -f "${target_dir}/.guardrails/scripts/guardrails-cli.sh.tmp" "${target_dir}/.guardrails/scripts/guardrails-cli.sh"
+  if [[ -f "${target_dir}/.gitignore.local" ]]; then
+    echo "" >> "$gitignore_file"
+    echo "# --- Project-specific (.gitignore.local) ---" >> "$gitignore_file"
+    cat "${target_dir}/.gitignore.local" >> "$gitignore_file"
+  fi
+
   chmod +x "${target_dir}/.guardrails/scripts/"*.sh 2>/dev/null || true
 
   # Write .guardrails/manifest.json
@@ -331,7 +367,6 @@ apply_modules() {
       modules: $modules
     }' > "${target_dir}/.guardrails/manifest.json"
 
-  # Generate .guardrails.lock
   generate_lockfile "$target_dir"
 
   echo -e "${GREEN}[GUARDRAILS] Successfully synchronized ${#active_modules[@]} module(s) and locked configuration checksums.${NC}"
@@ -354,8 +389,7 @@ case "$cmd" in
       esac
     done
     if [[ -z "$source_spec" ]]; then
-      script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-      source_spec="$(cd "${script_dir}/.." && pwd)"
+      source_spec="$(find_master_root)"
     fi
     IFS=',' read -r -a raw_mods <<< "$modules_csv"
     apply_modules "$target_dir" "$source_spec" "${raw_mods[@]}"

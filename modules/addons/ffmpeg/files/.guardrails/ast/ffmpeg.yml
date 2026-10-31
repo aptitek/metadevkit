@@ -1,0 +1,19 @@
+# =============================================================================
+# ffmpeg.yml — FFmpeg Subprocess Safety Semgrep AST Rules (addon:ffmpeg)
+# Bans shell=True and os.system() in media processing pipelines.
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: ffmpeg-no-subprocess-shell-true
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run(..., shell=True, ...)
+          - pattern: subprocess.Popen(..., shell=True, ...)
+          - pattern: subprocess.call(..., shell=True, ...)
+          - pattern: os.system(...)
+    message: >
+      [FFMPEG SECURITY] Executing FFmpeg/ffprobe with shell=True or os.system()
+      is forbidden (command injection risk). Pass argument lists to
+      subprocess.run([...], check=True) or asyncio.create_subprocess_exec().
+    languages: [python]
+    severity: ERROR

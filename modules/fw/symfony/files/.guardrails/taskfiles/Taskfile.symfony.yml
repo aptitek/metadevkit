@@ -25,12 +25,13 @@ tasks:
         fi
 
   lint:
-    desc: "Run Symfony Deptrac boundaries, Twig-CS-Fixer, and container/YAML/Twig linters"
+    desc: "Run Symfony Deptrac boundaries (cached), Twig-CS-Fixer, and container/YAML/Twig linters"
     cmds:
       - bash .guardrails/scripts/validate-symfony.sh .
       - |
+        mkdir -p .cache
         if [ -x ./vendor/bin/deptrac ]; then
-          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml
+          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml --cache-file=.cache/deptrac.cache
         fi
         if [ -x ./vendor/bin/twig-cs-fixer ] && [ -d templates ]; then
           ./vendor/bin/twig-cs-fixer lint templates/
@@ -46,12 +47,13 @@ tasks:
         fi
 
   typecheck:
-    desc: "Verify Symfony DI container types, Deptrac layers, and PHPStan Symfony/Doctrine rules"
+    desc: "Verify Symfony DI container types, Deptrac layers (cached), and PHPStan Symfony/Doctrine rules"
     cmds:
       - bash .guardrails/scripts/validate-symfony.sh .
       - |
+        mkdir -p .cache
         if [ -x ./vendor/bin/deptrac ]; then
-          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml
+          ./vendor/bin/deptrac analyse --config-file=deptrac.yaml --cache-file=.cache/deptrac.cache
         fi
         if [ -f ./bin/console ] && command -v php >/dev/null 2>&1 && [ -d ./vendor ]; then
           php ./bin/console lint:container --env=test

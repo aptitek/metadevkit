@@ -1,0 +1,3 @@
+# --- Module: addon:docker ---
+.docker-volumes/
+*.tar

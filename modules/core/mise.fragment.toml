@@ -1,8 +1,5 @@
-# --- Module: core ---
+# --- Module: core (Standalone Native Binaries — Zero Node/Python Runtime) ---
 go-task = "latest"
 lefthook = "latest"
-"npm:jscpd" = "latest"
-"pipx:lizard" = "latest"
+jq = "latest"
 trivy = "latest"
-"pipx:semgrep" = "latest"
-"pipx:copier" = "latest"

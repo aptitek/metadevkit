@@ -1,22 +1,41 @@
-# OS & Editor artifacts
+# =============================================================================
+# .gitignore — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# Active modules: core lang:python lang:shell addon:devkit
+# For project-specific ignore rules, create '.gitignore.local'.
+# =============================================================================
+
+# --- Module: core ---
 .DS_Store
 Thumbs.db
+*.log
+*.tmp
 *.swp
 *~
-.idea/
-.vscode/
+.env
+.env.*
+!.env.example
+!.env.template
+tmp/
+reports/
+.cache/
+.task/
 
-# Python caches & virtualenvs
+# --- Module: lang:python ---
 __pycache__/
 *.py[cod]
 *$py.class
 .venv/
 venv/
-.pytest_cache/
-.ruff_cache/
 .mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mutmut-cache/
+dist/
+build/
+*.egg-info/
 
-# Local task overrides & temp files
-Taskfile.local.yml
-*.tmp
-*.log
+# --- Module: lang:shell ---
+*.bats.log

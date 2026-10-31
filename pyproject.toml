@@ -18,9 +18,12 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra -q"
+cache_dir = ".cache/pytest"
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 warn_unused_ignores = true
 show_error_codes = true
+cache_dir = ".cache/mypy"
+sqlite_cache = true

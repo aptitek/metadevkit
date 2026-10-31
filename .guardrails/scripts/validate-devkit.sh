@@ -3,10 +3,12 @@
 # validate-devkit.sh — Meta-Devkit Self-Governance Gate ("Who Guards the Guardians")
 # Enforces:
 #   1. Module manifest schema & DAG integrity (modules/**/module.json)
-#   2. Semgrep AST rule file structure (rules/ast/*.yml & .guardrails/ast/*.yml)
+#   2. Colocated Semgrep AST rules (modules/**/files/.guardrails/ast/*.yml;
+#      forbids legacy root rules/ directory)
 #   3. Agent Skill frontmatter, Token Parsimony (<= 100 lines per SKILL.md),
 #      and ./references/*.md link resolution
-#   4. Module-to-Root Skill & Reference byte-for-byte parity
+#   4. Strict Root Isolation (DRY): root .agents/skills/ and .guardrails/ast/
+#      only contain files from modules active in .guardrails/manifest.json
 #   5. JSON configuration validity across all modules
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
@@ -14,6 +16,12 @@ set -euo pipefail
 
 ROOT_DIR="${1:-.}"
 ERRORS=0
+
+# 0. Forbid legacy global rules/ directory (AST rules must be colocated in modules/)
+if [[ -d "${ROOT_DIR}/rules" ]]; then
+  echo "❌ [DEVKIT DRY GATE] Legacy global '${ROOT_DIR}/rules' directory detected. Colocate all AST rules inside 'modules/<layer>/<name>/files/.guardrails/ast/'." >&2
+  ERRORS=$((ERRORS + 1))
+fi
 
 # 1. Validate all JSON files in the repository
 while IFS= read -r -d '' json_file; do
@@ -45,7 +53,6 @@ if [[ -d "${ROOT_DIR}/modules" ]]; then
         ;;
     esac
 
-    # Verify each dependency in depends_on exists
     while IFS= read -r dep_id; do
       [[ -z "${dep_id}" ]] && continue
       dep_rel=""
@@ -68,24 +75,23 @@ if [[ -d "${ROOT_DIR}/modules" ]]; then
   done < <(find "${ROOT_DIR}/modules" -type f -name "module.json" -print0)
 fi
 
-# 3. Validate AST YAML rule files
-for ast_dir in "${ROOT_DIR}/rules/ast" "${ROOT_DIR}/.guardrails/ast"; do
-  [[ -d "${ast_dir}" ]] || continue
-  while IFS= read -r -d '' yml_file; do
-    if ! grep -E -q '^rules:' "${yml_file}"; then
-      echo "❌ [DEVKIT GATE] ${yml_file}: Missing top-level 'rules:' key." >&2
-      ERRORS=$((ERRORS + 1))
-    fi
-    if ! grep -E -q '^[[:space:]]*-[[:space:]]+id:[[:space:]]+[a-z0-9-]+' "${yml_file}"; then
-      echo "❌ [DEVKIT GATE] ${yml_file}: Missing valid rule '- id: <kebab-case-id>'." >&2
-      ERRORS=$((ERRORS + 1))
-    fi
-    if ! grep -E -q '^[[:space:]]*severity:[[:space:]]+(ERROR|WARNING|INFO)' "${yml_file}"; then
-      echo "❌ [DEVKIT GATE] ${yml_file}: Missing 'severity: ERROR|WARNING|INFO'." >&2
-      ERRORS=$((ERRORS + 1))
-    fi
-  done < <(find "${ast_dir}" -type f -name "*.yml" -print0)
-done
+# 3. Validate all colocated & active AST YAML rule files
+while IFS= read -r -d '' yml_file; do
+  if ! grep -E -q '^rules:' "${yml_file}"; then
+    echo "❌ [DEVKIT GATE] ${yml_file}: Missing top-level 'rules:' key." >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+  if ! grep -E -q '^[[:space:]]*-[[:space:]]+id:[[:space:]]+[a-z0-9-]+' "${yml_file}"; then
+    echo "❌ [DEVKIT GATE] ${yml_file}: Missing valid rule '- id: <kebab-case-id>'." >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+  if ! grep -E -q '^[[:space:]]*severity:[[:space:]]+(ERROR|WARNING|INFO)' "${yml_file}"; then
+    echo "❌ [DEVKIT GATE] ${yml_file}: Missing 'severity: ERROR|WARNING|INFO'." >&2
+    ERRORS=$((ERRORS + 1))
+  fi
+done < <(find "${ROOT_DIR}" \
+  -type d \( -name ".git" -o -name "node_modules" -o -name ".venv" \) -prune \
+  -o -type f -path "*/.guardrails/ast/*.yml" -print0)
 
 # 4. Validate Agent Skills (Frontmatter, Token Parsimony <= 100 lines, and Reference links)
 while IFS= read -r -d '' skill_file; do
@@ -93,13 +99,11 @@ while IFS= read -r -d '' skill_file; do
   expected_name="$(basename "${skill_dir}")"
   line_count="$(wc -l < "${skill_file}")"
 
-  # 4a. Token Parsimony Gate (<= 100 lines per SKILL.md; move bulky content to references/)
   if [[ "${line_count}" -gt 100 ]]; then
     echo "❌ [DEVKIT SKILL TOKEN GATE] ${skill_file}: ${line_count} lines exceeds 100-line Progressive Disclosure cap. Move detailed examples into '${skill_dir}/references/*.md'." >&2
     ERRORS=$((ERRORS + 1))
   fi
 
-  # 4b. Frontmatter name & description check
   if [[ "$(head -n 1 "${skill_file}")" != "---" ]]; then
     echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Missing YAML frontmatter opening '---'." >&2
     ERRORS=$((ERRORS + 1))
@@ -115,7 +119,6 @@ while IFS= read -r -d '' skill_file; do
     ERRORS=$((ERRORS + 1))
   fi
 
-  # 4c. Verify all relative ./references/... links resolve to existing files
   while IFS= read -r ref_rel; do
     [[ -z "${ref_rel}" ]] && continue
     clean_rel="${ref_rel#./}"
@@ -128,19 +131,52 @@ done < <(find "${ROOT_DIR}" \
   -type d \( -name ".git" -o -name "node_modules" \) -prune \
   -o -type f -name "SKILL.md" -print0)
 
-# 5. Module-to-Root Skill Parity Gate (when both modules/ and .agents/skills/ exist)
-if [[ -d "${ROOT_DIR}/modules" && -d "${ROOT_DIR}/.agents/skills" ]]; then
-  while IFS= read -r -d '' mod_skill_file; do
-    rel_skill="${mod_skill_file#*/files/.agents/skills/}"
-    root_skill_file="${ROOT_DIR}/.agents/skills/${rel_skill}"
-    if [[ ! -f "${root_skill_file}" ]]; then
-      echo "❌ [DEVKIT PARITY GATE] Skill file '${rel_skill}' exists in '${mod_skill_file}' but is missing from '.agents/skills/${rel_skill}'. Run 'task guard:sync'." >&2
-      ERRORS=$((ERRORS + 1))
-    elif ! cmp -s "${mod_skill_file}" "${root_skill_file}"; then
-      echo "❌ [DEVKIT PARITY GATE] Skill drift detected between '${mod_skill_file}' and '.agents/skills/${rel_skill}'. Run 'task guard:sync'." >&2
-      ERRORS=$((ERRORS + 1))
+# 5. Root DRY Isolation Gate: ensure root .agents/skills/ and .guardrails/ast/ only contain
+# files from modules active in .guardrails/manifest.json
+if [[ -d "${ROOT_DIR}/modules" && -f "${ROOT_DIR}/.guardrails/manifest.json" ]]; then
+  declare -A allowed_skills=()
+  declare -A allowed_ast=()
+
+  while IFS= read -r active_mod; do
+    [[ -z "${active_mod}" ]] && continue
+    mod_rel=""
+    case "${active_mod}" in
+      core) mod_rel="modules/core" ;;
+      lang:*) mod_rel="modules/lang/${active_mod#lang:}" ;;
+      fw:*) mod_rel="modules/fw/${active_mod#fw:}" ;;
+      addon:*) mod_rel="modules/addons/${active_mod#addon:}" ;;
+    esac
+    if [[ -d "${ROOT_DIR}/${mod_rel}/files/.agents/skills" ]]; then
+      while IFS= read -r -d '' sdir; do
+        allowed_skills["$(basename "${sdir}")"]=1
+      done < <(find "${ROOT_DIR}/${mod_rel}/files/.agents/skills" -mindepth 1 -maxdepth 1 -type d -print0)
     fi
-  done < <(find "${ROOT_DIR}/modules" -type f -path "*/files/.agents/skills/*" -print0)
+    if [[ -d "${ROOT_DIR}/${mod_rel}/files/.guardrails/ast" ]]; then
+      while IFS= read -r -d '' afile; do
+        allowed_ast["$(basename "${afile}")"]=1
+      done < <(find "${ROOT_DIR}/${mod_rel}/files/.guardrails/ast" -type f -name "*.yml" -print0)
+    fi
+  done < <(jq -r '.modules[]' "${ROOT_DIR}/.guardrails/manifest.json")
+
+  if [[ -d "${ROOT_DIR}/.agents/skills" ]]; then
+    while IFS= read -r -d '' root_sdir; do
+      sname="$(basename "${root_sdir}")"
+      if [[ -z "${allowed_skills[$sname]+x}" ]]; then
+        echo "❌ [DEVKIT DRY GATE] Root '.agents/skills/${sname}' belongs to an inactive module and must not be duplicated at root." >&2
+        ERRORS=$((ERRORS + 1))
+      fi
+    done < <(find "${ROOT_DIR}/.agents/skills" -mindepth 1 -maxdepth 1 -type d -print0)
+  fi
+
+  if [[ -d "${ROOT_DIR}/.guardrails/ast" ]]; then
+    while IFS= read -r -d '' root_afile; do
+      aname="$(basename "${root_afile}")"
+      if [[ -z "${allowed_ast[$aname]+x}" ]]; then
+        echo "❌ [DEVKIT DRY GATE] Root '.guardrails/ast/${aname}' belongs to an inactive module and must not be duplicated at root." >&2
+        ERRORS=$((ERRORS + 1))
+      fi
+    done < <(find "${ROOT_DIR}/.guardrails/ast" -type f -name "*.yml" -print0)
+  fi
 fi
 
 if [[ "${ERRORS}" -gt 0 ]]; then
@@ -148,4 +184,4 @@ if [[ "${ERRORS}" -gt 0 ]]; then
   exit 1
 fi
 
-echo "✅ [DEVKIT GATE] Meta-devkit self-governance checks passed (modules, AST rules, & progressive skills verified)."
+echo "✅ [DEVKIT GATE] Meta-devkit self-governance checks passed (modules, colocated AST rules, & DRY root verified)."

@@ -21,6 +21,14 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             ws.run_cmd(["bash", str(py_script), str(REPO_ROOT)], cwd=REPO_ROOT)
             ws.run_cmd(["bash", str(devkit_script), str(REPO_ROOT)], cwd=REPO_ROOT)
 
+            self.assertEqual(
+                ws.read_manifest_modules(REPO_ROOT),
+                ["core", "lang:python", "lang:shell", "addon:devkit"],
+            )
+            self.assertFalse((REPO_ROOT / "rules").exists())
+            self.assertFalse((REPO_ROOT / "playwright.config.ts").exists())
+            self.assertFalse((REPO_ROOT / "stryker.config.mjs").exists())
+
     def test_shell_gate_blocks_missing_strict_mode_and_eval(self) -> None:
         """Verify lang:shell rejects scripts lacking set -euo pipefail or using eval."""
         with RepoTestWorkspace() as ws:
@@ -53,6 +61,35 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             proc = ws.run_cmd(["task", "lint"], cwd=proj, check=False)
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn("exceeds 100-line Progressive Disclosure cap", proc.stderr + proc.stdout)
+
+    def test_lightweight_shell_docker_stack_and_composable_gitignore(self) -> None:
+        """Verify shell+docker projects have zero Node/Python in mise.toml and compose .gitignore."""
+        with RepoTestWorkspace() as ws:
+            proj = ws.project_dir("mini-shell-docker")
+            ws.init_project(proj, "core,lang:shell,addon:docker")
+
+            mise_text = (proj / "mise.toml").read_text(encoding="utf-8")
+            for forbidden_runtime in ("node", "python", "npm:", "pipx:"):
+                self.assertNotIn(forbidden_runtime, mise_text)
+
+            for js_cfg in ("commitlint.config.mjs", ".secretlintrc.json", ".jscpd.json", "playwright.config.ts"):
+                self.assertFalse((proj / js_cfg).exists())
+
+            gitignore_text = (proj / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn("# --- Module: core ---", gitignore_text)
+            self.assertIn("# --- Module: lang:shell ---", gitignore_text)
+            self.assertIn("# --- Module: addon:docker ---", gitignore_text)
+
+            (proj / ".gitignore.local").write_text("custom-build-dir/\n", encoding="utf-8")
+            ws.run_cmd(["task", "guard:sync"], cwd=proj)
+            self.assertIn("custom-build-dir/", (proj / ".gitignore").read_text(encoding="utf-8"))
+
+            dockerfile = proj / "Dockerfile"
+            dockerfile.write_text("FROM alpine:latest\n", encoding="utf-8")
+            self.assertNotEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
+
+            dockerfile.write_text("FROM alpine:3.21\nUSER appuser\n", encoding="utf-8")
+            ws.run_cmd(["task", "verify"], cwd=proj)
 
 
 if __name__ == "__main__":

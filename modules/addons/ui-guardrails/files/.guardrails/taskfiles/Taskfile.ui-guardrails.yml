@@ -1,0 +1,21 @@
+# =============================================================================
+# Taskfile.ui-guardrails.yml — Cross-Language UI i18n & a11y Tasks (addon:ui-guardrails)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Verify cross-language UI localization parity (i18n) and accessibility (a11y)"
+    cmds:
+      - bash .guardrails/scripts/validate-i18n-and-a11y.sh .
+
+  a11y:
+    desc: "Run cross-language UI accessibility verification"
+    cmds:
+      - bash .guardrails/scripts/validate-i18n-and-a11y.sh --a11y .
+
+  i18n:
+    desc: "Run cross-language UI locale JSON key parity verification"
+    cmds:
+      - bash .guardrails/scripts/validate-i18n-and-a11y.sh --i18n .

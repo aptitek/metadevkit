@@ -1,0 +1,8 @@
+# --- Module: lang:ts ---
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.wireit/

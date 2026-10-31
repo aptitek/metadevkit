@@ -1,0 +1,4 @@
+# --- Module: fw:django ---
+staticfiles/
+media/
+db.sqlite3

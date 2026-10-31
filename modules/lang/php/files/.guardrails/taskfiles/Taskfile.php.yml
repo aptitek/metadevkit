@@ -15,30 +15,33 @@ tasks:
         fi
 
   format:
-    desc: "Format PHP sources using Laravel Pint"
+    desc: "Format PHP sources using Laravel Pint (with .cache/pint.json)"
     cmds:
       - |
+        mkdir -p .cache
         if [ -x ./vendor/bin/pint ]; then
-          ./vendor/bin/pint --config pint.json {{.STAGED_FILES}}
+          ./vendor/bin/pint --config pint.json --cache-file=.cache/pint.json {{.STAGED_FILES}}
         fi
 
   lint:
-    desc: "Verify strict_types=1, formatting with Pint, and static analysis with PHPStan"
+    desc: "Verify strict_types=1, formatting with Pint (cached), and static analysis with PHPStan (cached)"
     cmds:
       - bash .guardrails/scripts/validate-php.sh .
       - |
+        mkdir -p .cache/phpstan
         if [ -x ./vendor/bin/pint ]; then
-          ./vendor/bin/pint --test --config pint.json
+          ./vendor/bin/pint --test --config pint.json --cache-file=.cache/pint.json
         fi
         if [ -x ./vendor/bin/phpstan ]; then
           ./vendor/bin/phpstan analyse --configuration=phpstan.neon.dist
         fi
 
   typecheck:
-    desc: "Verify PHP strict_types=1 and PHPStan level max static analysis"
+    desc: "Verify PHP strict_types=1 and PHPStan level max static analysis (cached)"
     cmds:
       - bash .guardrails/scripts/validate-php.sh .
       - |
+        mkdir -p .cache/phpstan
         if [ ! -f phpstan.neon.dist ]; then
           echo "[PHP TYPECHECK ERROR] Missing locked phpstan.neon.dist." >&2
           exit 1
@@ -50,11 +53,12 @@ tasks:
         fi
 
   test:
-    desc: "Run Pest tests with minimum 85% coverage"
+    desc: "Run Pest tests with minimum 85% coverage (parallel + cached)"
     cmds:
       - |
+        mkdir -p .cache/phpunit
         if [ -x ./vendor/bin/pest ]; then
-          ./vendor/bin/pest --coverage --min=85
+          ./vendor/bin/pest --parallel --cache-directory=.cache/phpunit --coverage --min=85
         fi
 
   coverage:

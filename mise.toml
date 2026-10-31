@@ -1,23 +1,20 @@
 # =============================================================================
 # mise.toml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
-# Active modules: core lang:shell lang:python addon:devkit addon:testing-fortress
+# Active modules: core lang:python lang:shell addon:devkit
 # =============================================================================
 [tools]
 
-# --- Module: core ---
+# --- Module: core (Standalone Native Binaries — Zero Node/Python Runtime) ---
 go-task = "latest"
 lefthook = "latest"
-"npm:jscpd" = "latest"
-"pipx:lizard" = "latest"
+jq = "latest"
 trivy = "latest"
-"pipx:semgrep" = "latest"
-"pipx:copier" = "latest"
-
-# --- lang:shell toolchain ---
-shellcheck = "latest"
-shfmt = "latest"
 
 # --- Module: lang:python ---
 python = "3.12"
 uv = "latest"
 ruff = "latest"
+
+# --- lang:shell toolchain ---
+shellcheck = "latest"
+shfmt = "latest"

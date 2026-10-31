@@ -19,5 +19,8 @@
 //       coverageThreshold.set(85)
 //       excludedClasses.set(setOf("*.mixin.*", "*Mixin*", "*\$DefaultImpls"))
 //       outputFormats.set(setOf("XML", "HTML"))
+//       enableDefaultIncrementalAnalysis.set(true)
+//       historyInputLocation.set(file(".cache/pitest/history.txt"))
+//       historyOutputLocation.set(file(".cache/pitest/history.txt"))
 //       threads.set(Runtime.getRuntime().availableProcessors())
 //   }

@@ -1,0 +1,4 @@
+# --- Module: addon:testing-fortress ---
+playwright-report/
+test-results/
+.stryker-tmp/
