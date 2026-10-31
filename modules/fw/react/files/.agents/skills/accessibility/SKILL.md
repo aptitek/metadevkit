@@ -2,13 +2,13 @@
 name: accessibility
 description: >-
   Audit and implement WCAG 2.2 AA accessibility in React and Astro components
-  following .guardrails/eslint/a11y.mjs. Use when building UI components, forms,
+  following .guardrails/eslint/ui-guardrails.mjs. Use when building UI components, forms,
   navigation, dialogs, keyboard interactions, or running a11y audits.
 ---
 
 # Skill: WCAG 2.2 AA Accessibility (`accessibility`)
 
-All JSX components (including Panda CSS primitives and `@m3e/react` wrappers mapped in `.guardrails/eslint/a11y.mjs`) are checked against strict `jsx-a11y` rules and `@axe-core/playwright`.
+All JSX components (including Panda CSS primitives and `@m3e/react` wrappers mapped in `.guardrails/eslint/ui-guardrails.mjs`) are checked against strict `jsx-a11y` rules and `@axe-core/playwright`.
 
 ## 1. Mandatory WCAG 2.2 AA Requirements
 1. **Perceivable**:

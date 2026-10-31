@@ -118,7 +118,7 @@ Toutes les opérations du cycle de vie s'exécutent via `task` (`go-task`) avec 
    - `lang:php` (`composer`, `pint`, `phpstan` level `max`, `declare(strict_types=1);` enforcement, `pest` `>= 85%` coverage, and **Infection PHP + PHPStan** `infection.json5` `>= 85%` MSI / `>= 90%` Covered MSI)
    - `lang:shell` (`shellcheck`, `shfmt`, `bash -n`, `set -euo pipefail`, zero `eval` / `curl | sh` / unquoted `$`)
 3. **`fw:<framework>` (Hierarchical Framework Stratum — alias: `react`, `react-router`, `astro`, `flet`, `nicegui`, `langchain`, `jupyter`, `django`, `symfony`, `minecraft`, `quilt`, `fabric`)**:
-   - `fw:react` (Depends on `lang:ts`, `addon:ui-guardrails`: **Lock 2 Strict i18n**, **Lock 4 True Atomic Purity & Stateless Atoms**, WCAG 2.2 AA `a11y.mjs`, `.size-limit.json`, max 150 lines per `.tsx`, `lint-error-boundaries.mjs`)
+   - `fw:react` (Depends on `lang:ts`, `addon:ui-guardrails`: **Lock 2 Strict i18n**, **Lock 4 True Atomic Purity & Stateless Atoms**, WCAG 2.2 AA `ui-guardrails.mjs`, `.size-limit.json`, max 150 lines per `.tsx`, `lint-error-boundaries.mjs`)
    - `fw:react-router` (Depends on `lang:ts` > `fw:react`: route parsimony max 2 top-level layouts & max 12 routes, nested `<Outlet />` hierarchy, loader/action separation)
    - `fw:astro` (Depends on `lang:ts`, `addon:ui-guardrails`: `astro check`, `.size-limit.json`, island architecture & a11y rules)
    - `fw:flet` (Depends on `lang:python`, `addon:ui-guardrails`: Flet Flutter UI engine + Material Design 3 `use_material3=True` & semantic `ft.Colors.*` tokens, 5-level Atomic Design hierarchy `atoms -> molecules -> organisms -> templates -> views`, and `pytest-playwright` E2E verification)

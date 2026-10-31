@@ -12,7 +12,7 @@
 //     molecules -> organisms/simulations -> templates -> pages)
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
-import a11yConfig from "./a11y.mjs";
+import a11yConfig from "./ui-guardrails.mjs";
 
 export const atomicPurityAndI18nSyntaxRules = [
   {

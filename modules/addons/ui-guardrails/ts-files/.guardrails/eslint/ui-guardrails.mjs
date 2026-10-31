@@ -1,5 +1,5 @@
 // =============================================================================
-// .guardrails/eslint/a11y.mjs — WCAG 2.2 AA & W3C ARIA Fortress Configuration
+// .guardrails/eslint/ui-guardrails.mjs — WCAG 2.2 AA & W3C ARIA Fortress Configuration
 // Maps Panda CSS layout primitives and Material Design 3 (@m3e/react) elements
 // to native HTML semantics for strict jsx-a11y verification.
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
