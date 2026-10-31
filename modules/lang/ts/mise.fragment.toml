@@ -1,4 +1,4 @@
 # --- Module: lang:ts ---
-node = "22.14"
-pnpm = "10.6"
+node = "24.22"
+pnpm = "12.15"
 "npm:jscpd" = "4.0"

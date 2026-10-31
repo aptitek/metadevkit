@@ -61,10 +61,10 @@ main() {
   # 3. Ensure task (go-task) and jq are available via mise if not already on PATH
   if command -v mise >/dev/null 2>&1; then
     if ! command -v task >/dev/null 2>&1 && ! command -v go-task >/dev/null 2>&1; then
-      mise use -g "go-task@3.42" </dev/null
+      mise use -g "task@3.54" </dev/null
     fi
     if ! command -v jq >/dev/null 2>&1; then
-      mise use -g "jq@1.7" </dev/null
+      mise use -g "jq@1.8" </dev/null
     fi
     export PATH="${HOME}/.local/share/mise/shims:${HOME}/.local/bin:${PATH}"
   fi

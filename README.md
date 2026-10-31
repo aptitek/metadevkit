@@ -56,21 +56,57 @@ Que vous passiez par `curl ... | bash -s -- <modules>`, `bootstrap.ps1` ou le `T
    - Installe les utilitaires POSIX indispensables dans MSYS2 via `pacman -S --noconfirm --needed bash git jq curl tar` et injecte `/c/msys64/usr\bin` dans le `PATH`.
    - Pose un fichier `.gitattributes` (`* text=auto eol=lf`) verrouillé pour empêcher `core.autocrlf` de convertir les scripts `.sh` et fichiers verrouillés en `CRLF`.
 2. **Installation automatique de `go-task` et `mise`** :
-   - Si `mise` ou `task` ne sont pas encore installés, le bootstrap les installe automatiquement (`winget` sous Windows, `brew` sous macOS, ou l'installeur officiel `https://mise.run` sous Linux), puis active les versions figées (`go-task@3.42`, `jq@1.7`, `lefthook@1.11`, `trivy@0.59` et les outils des modules choisis).
+   - Si `mise` ou `task` ne sont pas encore installés, le bootstrap les installe automatiquement (`winget` sous Windows, `brew` sous macOS, ou l'installeur officiel `https://mise.run` sous Linux), puis active les versions figées (`task@3.54`, `jq@1.8`, `lefthook@2.2`, `trivy@0.76` et les outils des modules choisis).
 3. **Assemblage modulaire & Verrouillage SHA-256 (`.guardrails.lock`)** :
    - Télécharge la source maître `metadevkit`, résout le graphe de dépendances (DAG) des modules demandés, assemble dynamiquement `Taskfile.yml`, `AGENTS.md`, `mise.toml` et `.gitignore`, et scelle toutes les configurations dans `.guardrails.lock`.
    - Dès la fin du one-liner :
      - `task` (ou `task verify`) lance la vérification complète du projet.
+     - `task update` met à jour ce devkit lui-même, les outils `mise` et toutes les dépendances des modules actifs (`uv`, `pnpm`, `composer`, `gradle`).
      - `task feature:add -- <module>` ajoute une brique à chaud (ex: `task feature:add -- docker`).
      - `task guard:sync` synchronise le projet avec la source maître.
+
+---
+
+## 📋 Référence des Commandes Universelles (`task`)
+
+Toutes les opérations du cycle de vie s'exécutent via `task` (`go-task`) avec exactement la même interface, quelle que soit la stack active dans `.guardrails/manifest.json` :
+
+| Commande | Catégorie | Description |
+| :--- | :--- | :--- |
+| `task` | Cycle de vie | Auto-amorce le projet s'il n'est pas initialisé, sinon lance `task verify` |
+| `task bootstrap` | Cycle de vie | Provisionne les prérequis (MSYS2 sous Windows, `mise`) et initialise le projet |
+| `task init MODULES=<m1,m2>` | Cycle de vie | Initialise ou reconfigure le projet avec les modules spécifiés (ex: `MODULES=python,django`) |
+| `task setup` | Cycle de vie | Installe la chaîne d'outils `mise`, les hooks Git `lefthook` et les dépendances des modules |
+| `task update` | Cycle de vie | Met à jour le devkit lui-même, les outils `mise` (`mise upgrade`) et les dépendances (`uv`, `pnpm`, `composer`, `gradle`) |
+| `task dev` | Cycle de vie | Démarre l'environnement de développement des modules actifs |
+| `task feature:add -- <mod>` | Guardrails | Ajoute un module ou addon à chaud au projet (ex: `task feature:add -- docker`) |
+| `task guard:check` | Guardrails | Vérifie l'intégrité cryptographique SHA-256 de tous les fichiers verrouillés (`.guardrails.lock`) |
+| `task guard:sync` | Guardrails | Recompile le VFS et resynchronise les configurations depuis la source maître |
+| `task check:quick` | Tier 1 (< 3s) | Boucle rapide inner-loop : `guard:check` + `ast:check` + `lint` |
+| `task test:quick` | Tier 1 (< 3s) | Exécution rapide des tests unitaires |
+| `task check:commit` | Tier 2 (< 10s) | Gate de pré-commit : `guard:check` + `lint` + `complexity` + `test` |
+| `task check:push` / `task verify` | Tier 3 (Complet) | Forteresse complète : `guard:check` → `lint` → `typecheck` → `a11y` → `i18n` → `dup` → `complexity` → `sec` → `test` → `coverage` → `mutate` |
+| `task format` | Qualité | Formate le code source des modules actifs (`ruff`, `prettier`/`eslint`, `pint`, `spotless`, `djlint`, `shfmt`) |
+| `task lint` | Qualité | Analyse statique, règles AST et détection de code mort sur tous les modules actifs |
+| `task ast:check` | Qualité | Vérifie les règles AST centralisées et l'absence de contournement de linter (`.guardrails/ast/`) |
+| `task typecheck` | Qualité | Vérification stricte du typage statique (`tsc`, `mypy --strict`, `javac`, `kotlinc`, `phpstan`) |
+| `task a11y` | Qualité | Vérification d'accessibilité WCAG 2.2 AA, sémantique Flet/NiceGUI et narrateur Minecraft |
+| `task i18n` | Qualité | Vérification de parité 100 % des clés de traduction JSON et absence de chaînes UI codées en dur |
+| `task dup` | Qualité | Détection de duplication de code via `jscpd` (`.jscpd.json`) |
+| `task complexity` | Qualité | Contrôle de la complexité cyclomatique (`CCN <= 8`) et de la taille des fonctions (`lizard` / `radon`) |
+| `task sec` | Sécurité | Audit de vulnérabilités, secrets et règles AST de sécurité (`trivy` + `semgrep` + `lint-secrets.sh`) |
+| `task test` | Tests | Exécute les suites de tests unitaires et d'intégration des modules actifs |
+| `task coverage` | Tests | Vérifie les seuils de couverture de branches et lignes (`TS >= 95%`, `Python >= 90%`, `JVM/PHP >= 85%`) |
+| `task mutate` | Tests | Exécute les tests de mutation (`StrykerJS`, `mutmut`, `PITest`/`Arcmutate`, `Infection`) |
+| `task self-test` | Meta-Devkit | Exécute la suite d'auto-tests d'intégration de bout en bout |
 
 ---
 
 ## Architecture: 4 Composable Strata (30 Modules)
 
 1. **`core` (Mandatory Universal Foundation)**:
-   - `mise.toml`: `go-task`, `lefthook`, `jq`, `trivy` (standalone native binaries with pinned versions)
-   - Self-bootstrapping `Taskfile.yml` + `Taskfile.base.yml`: Universal lifecycle contract (`bootstrap`, `init`, `setup`, `dev`, `format`, `lint`, `typecheck`, `a11y`, `i18n`, `dup`, `complexity`, `sec`, `test`, `coverage`, `mutate`, `verify`, `check:quick`, `test:quick`, `check:commit`, `check:push`, `guard:check`, `guard:sync`, `feature:add`)
+   - `mise.toml`: `task` (`go-task`), `lefthook`, `jq`, `trivy` (standalone native binaries with pinned versions)
+   - Self-bootstrapping `Taskfile.yml` + `Taskfile.base.yml`: Universal lifecycle contract (`bootstrap`, `init`, `setup`, `update`, `dev`, `format`, `lint`, `typecheck`, `a11y`, `i18n`, `dup`, `complexity`, `sec`, `test`, `coverage`, `mutate`, `verify`, `check:quick`, `test:quick`, `check:commit`, `check:push`, `guard:check`, `guard:sync`, `feature:add`)
    - `lefthook.yml`, `lint-secrets.sh`, composable `.gitignore`, LF-normalized `.gitattributes` (MSYS2/Windows safe)
    - Dynamic `AGENTS.md` + `.agents/skills/vibe-guardrails/SKILL.md`: Strict AI Vibe-Coding contract assembled from active module fragments
 2. **`lang:<language>` (Language Stratum — alias: `ts`, `python`, `kotlin`, `java`, `php`, `shell`)**:

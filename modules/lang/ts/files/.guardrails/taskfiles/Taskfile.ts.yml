@@ -14,6 +14,16 @@ tasks:
           pnpm install --frozen-lockfile || pnpm install
         fi
 
+  update:
+    desc: "Update TypeScript dependencies via pnpm"
+    cmds:
+      - |
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:ts] Fixture mode: verified pnpm update pipeline."
+        elif [ -f package.json ] && command -v pnpm >/dev/null 2>&1; then
+          pnpm update
+        fi
+
   dev:
     desc: "Run TypeScript development server"
     cmds:

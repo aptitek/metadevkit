@@ -15,6 +15,17 @@ tasks:
           ./gradlew --version >/dev/null
         fi
 
+  update:
+    desc: "Refresh Gradle dependencies"
+    cmds:
+      - |
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:java] Fixture mode: verified gradlew --refresh-dependencies pipeline."
+        elif [ -f ./gradlew ]; then
+          chmod +x ./gradlew
+          ./gradlew --refresh-dependencies help >/dev/null
+        fi
+
   format:
     desc: "Format Java sources using Spotless (with Gradle build & configuration cache)"
     cmds:

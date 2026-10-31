@@ -23,6 +23,7 @@ You MUST interact with the repository **exclusively** through the universal `tas
 | Initialize or bootstrap a project | `task init MODULES=<m1,m2>` / `task bootstrap` |
 | Verify config lock | `task guard:check` |
 | Sync guardrails | `task guard:sync` |
+| Update devkit, mise toolchain & dependencies | `task update` |
 | Add module/addon | `task feature:add -- <mod>` |
 
 ---

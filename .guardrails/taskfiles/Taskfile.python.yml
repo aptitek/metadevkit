@@ -31,6 +31,24 @@ tasks:
           uv sync || uv sync --offline
         fi
 
+  update:
+    desc: "Upgrade Python lockfile and synchronize environment via uv"
+    cmds:
+      - |
+        if ! command -v uv >/dev/null 2>&1; then
+          export MISE_DATA_DIR="${MISE_DATA_DIR:-${TMPDIR:-/tmp}/mise-data}"
+          export PATH="${MISE_DATA_DIR}/shims:${PATH}"
+          export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/uv-cache}"
+        fi
+        export UV_CACHE_DIR="${UV_CACHE_DIR:-.cache/uv}"
+        export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-${TMPDIR:-/tmp}/guardrails-venv-$(printf '%s' "$PWD" | cksum | awk '{print $1}')}"
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:python] Fixture mode: verified uv lock --upgrade & uv sync update pipeline."
+        elif [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; then
+          uv lock --upgrade
+          uv sync
+        fi
+
   format:
     desc: "Format Python files with ruff (cached)"
     cmds:

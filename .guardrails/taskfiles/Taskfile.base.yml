@@ -57,6 +57,35 @@ tasks:
           fi
         done
 
+  update:
+    desc: "Update polyglot-guardrails devkit, mise toolchain, and all module dependencies"
+    cmds:
+      - |
+        if [ -d ./modules/core ] && [ -d ./.git ] && [ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ]; then
+          if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+            git pull --ff-only
+          fi
+        fi
+        bash ./.guardrails/scripts/guardrails-cli.sh sync --target "."
+      - |
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ] && command -v mise >/dev/null 2>&1; then
+          mise trust -a </dev/null
+          mise install </dev/null
+          mise upgrade </dev/null
+        fi
+        if command -v lefthook >/dev/null 2>&1 && [ -d .git ]; then
+          lefthook install || true
+        fi
+      - |
+        for mod in $(jq -r '.modules[]' .guardrails/manifest.json); do
+          short="${mod#*:}"
+          tf=".guardrails/taskfiles/Taskfile.${short}.yml"
+          if [ "$short" != "core" ] && [ -f "$tf" ] && grep -qE '^  update:' "$tf"; then
+            {{.TASK_EXE}} "${short}:update"
+          fi
+        done
+      - task: guard:check
+
   dev:
     desc: "Start development environment for active modules"
     cmds:

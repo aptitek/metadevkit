@@ -213,10 +213,27 @@ if [[ -d "${ROOT_DIR}/modules" ]]; then
     ' "${all_mod_jsons[@]}")
   fi
 
+  declare -A mise_reg_tools=()
+  if command -v mise >/dev/null 2>&1; then
+    while IFS= read -r reg_line; do
+      tname="${reg_line%% *}"
+      [[ -n "$tname" ]] && mise_reg_tools["$tname"]=1
+    done < <(mise registry 2>/dev/null || true)
+  fi
+
   while IFS= read -r -d '' mise_frag; do
     if grep -E -q '=\s*"latest"' "${mise_frag}"; then
       echo "❌ [DEVKIT MISE PIN GATE] ${mise_frag}: Unpinned '\"latest\"' version is forbidden. Pin all tool versions to major.minor." >&2
       ERRORS=$((ERRORS + 1))
+    fi
+    if [[ "${#mise_reg_tools[@]}" -gt 0 ]]; then
+      while IFS= read -r bare_tool; do
+        [[ -z "$bare_tool" ]] && continue
+        if [[ -z "${mise_reg_tools[$bare_tool]+x}" ]]; then
+          echo "❌ [DEVKIT MISE REGISTRY GATE] ${mise_frag}: Tool '${bare_tool}' does not exist in 'mise registry'." >&2
+          ERRORS=$((ERRORS + 1))
+        fi
+      done < <(awk -F'=' '/^[a-z0-9_-]+[[:space:]]*=/ { gsub(/[[:space:]]/, "", $1); print $1 }' "${mise_frag}")
     fi
   done < <(find "${ROOT_DIR}/modules" -type f -name "mise.fragment.toml" -print0)
 fi

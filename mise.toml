@@ -5,16 +5,16 @@
 [tools]
 
 # --- Module: core (Standalone Native Binaries — Zero Node/Python Runtime) ---
-go-task = "3.42"
-lefthook = "1.11"
-jq = "1.7"
-trivy = "0.59"
+task = "3.54"
+lefthook = "2.2"
+jq = "1.8"
+trivy = "0.76"
 
 # --- Module: lang:python ---
-python = "3.12"
-uv = "0.6"
+python = "3.14"
+uv = "0.13"
 ruff = "0.17"
 
 # --- Module: lang:shell ---
-shellcheck = "0.10"
-shfmt = "3.11"
+shellcheck = "0.11"
+shfmt = "3.14"

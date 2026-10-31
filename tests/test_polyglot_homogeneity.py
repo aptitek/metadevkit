@@ -62,7 +62,7 @@ class PolyglotHomogeneityTests(unittest.TestCase):
                 self.assertTrue((proj / expected_cfg).is_file(), f"Missing {expected_cfg} in {name}")
                 self.assertEqual((proj / "playwright.config.ts").is_file(), "lang:ts" in modules_csv)
                 self.assertEqual((proj / "stryker.config.mjs").is_file(), "lang:ts" in modules_csv)
-                for gate in ("typecheck", "a11y", "i18n", "coverage", "mutate", "verify"):
+                for gate in ("update", "typecheck", "a11y", "i18n", "coverage", "mutate", "verify"):
                     ws.run_cmd(["task", gate], cwd=proj)
 
     def test_i18n_locale_parity_and_minecraft_screen_narrator(self) -> None:

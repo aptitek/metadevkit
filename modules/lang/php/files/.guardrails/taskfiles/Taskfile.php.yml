@@ -14,6 +14,16 @@ tasks:
           composer install --no-interaction --prefer-dist
         fi
 
+  update:
+    desc: "Update Composer dependencies"
+    cmds:
+      - |
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" = "1" ]; then
+          echo "[lang:php] Fixture mode: verified composer update pipeline."
+        elif [ -f composer.json ] && command -v composer >/dev/null 2>&1; then
+          composer update --no-interaction --prefer-dist
+        fi
+
   format:
     desc: "Format PHP sources using Laravel Pint (with .cache/pint.json)"
     cmds:

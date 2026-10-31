@@ -1,4 +1,4 @@
 # --- Module: lang:python ---
-python = "3.12"
-uv = "0.6"
+python = "3.14"
+uv = "0.13"
 ruff = "0.17"
