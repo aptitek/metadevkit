@@ -1,6 +1,10 @@
 {
   "id": "addon:cloudflare",
+  "aliases": ["cloudflare", "addons:cloudflare"],
   "layer": "addon",
   "description": "Cloudflare Workers/Pages/D1/R2 addon: wrangler, cloudflared, type generation, wrangler.toml validation, AST security rules",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["worker", "cloudflare"],
+  "conditional_files": []
 }

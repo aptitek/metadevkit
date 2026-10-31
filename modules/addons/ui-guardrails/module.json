@@ -1,6 +1,15 @@
 {
   "id": "addon:ui-guardrails",
+  "aliases": ["ui-guardrails", "ui", "i18n", "a11y", "addons:ui-guardrails"],
   "layer": "addon",
+  "description": "Cross-Language UI Localization & Accessibility Fortress: 100% locale JSON key parity, WCAG 2.2 AA JSX/Astro/Twig/Django checks, Flet/NiceGUI semantic labels & tooltips, and Minecraft Screen Narrator enforcement",
   "depends_on": ["core"],
-  "description": "Cross-Language UI Localization & Accessibility Fortress: 100% locale JSON key parity, WCAG 2.2 AA JSX/Astro/Twig/Django checks, Flet/NiceGUI semantic labels & tooltips, and Minecraft Screen Narrator enforcement"
+  "conflicts_with": [],
+  "commit_scopes": ["ui", "i18n", "a11y"],
+  "conditional_files": [
+    {
+      "when_all": ["lang:ts"],
+      "source_dir": "ts-files"
+    }
+  ]
 }

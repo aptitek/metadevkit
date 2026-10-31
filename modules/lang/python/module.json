@@ -1,6 +1,10 @@
 {
   "id": "lang:python",
+  "aliases": ["python"],
   "layer": "lang",
   "description": "Python quality fortress with uv, Ruff (McCabe <= 8, max-statements <= 20, max 256 lines/file), MyPy strict, Radon, Vulture, pydantic-settings, and Pytest",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["python", "api", "cli"],
+  "conditional_files": []
 }

@@ -77,12 +77,11 @@ class WebStackTests(unittest.TestCase):
             active = ws.read_manifest_modules(proj)
             self.assertIn("addon:ui-guardrails", active)
             self.assertEqual(len(active), 11)
-            self.assertTrue((proj / ".guardrails" / "content-md" / "paths.json").is_file())
+            self.assertTrue((proj / ".guardrails" / "paths.json").is_file())
 
             atoms_dir = proj / "src" / "components" / "atoms"
             atoms_dir.mkdir(parents=True, exist_ok=True)
-            bypass_tag = "// @ts-" + "ignore"
-            (atoms_dir / "Button.tsx").write_text(f"{bypass_tag}\nexport function Button(): null {{ return null; }}\n")
+            (atoms_dir / "Button.tsx").write_text("// @ts-ignore\nexport function Button(): null { return null; }\n")
             self.assertNotEqual(ws.run_cmd(["task", "verify"], cwd=proj, check=False).returncode, 0)
 
             _write_compliant_web_fixtures(proj)

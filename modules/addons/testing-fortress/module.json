@@ -1,6 +1,15 @@
 {
   "id": "addon:testing-fortress",
+  "aliases": ["testing-fortress", "addons:testing-fortress"],
   "layer": "addon",
+  "description": "Polyglot Testing Fortress: Lock 6 (test assertion purity, zero mocks/skips/tautological assertions across TS/Python/Java/Kotlin/PHP), 1:1 TDD unit test companions, Mutation Testing (StrykerJS >=95%, mutmut >=90%, PITest/Arcmutate >=85%, Infection >=85%), and Playwright + Axe WCAG 2.2 AA E2E",
   "depends_on": ["core"],
-  "description": "Polyglot Testing Fortress: Lock 6 (test assertion purity, zero mocks/skips/tautological assertions across TS/Python/Java/Kotlin/PHP), 1:1 TDD unit test companions, Mutation Testing (StrykerJS >=95%, mutmut >=90%, PITest/Arcmutate >=85%, Infection >=85%), and Playwright + Axe WCAG 2.2 AA E2E"
+  "conflicts_with": [],
+  "commit_scopes": ["e2e", "mutation"],
+  "conditional_files": [
+    {
+      "when_all": ["lang:ts"],
+      "source_dir": "ts-files"
+    }
+  ]
 }

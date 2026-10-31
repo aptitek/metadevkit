@@ -1,0 +1,4 @@
+{
+  "extend": ".guardrails/python/ruff.base.toml",
+  "cache-dir": ".cache/ruff"
+}

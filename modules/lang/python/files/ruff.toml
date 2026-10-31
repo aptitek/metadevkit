@@ -1,7 +1,0 @@
-# =============================================================================
-# ruff.toml — Strict Python Linter & Formatter Configuration (lang:python)
-# Extends .guardrails/python/ruff.base.toml (McCabe <= 8, max-statements <= 20)
-# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
-# =============================================================================
-extend = ".guardrails/python/ruff.base.toml"
-cache-dir = ".cache/ruff"

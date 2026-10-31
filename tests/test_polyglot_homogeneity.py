@@ -17,7 +17,7 @@ def _seed_real_python_project(proj: Path) -> Path:
         '  "pytest>=8.3.0",\n  "pytest-cov>=6.0.0",\n  "ruff>=0.11.0",\n'
         '  "mypy>=1.15.0",\n  "mutmut>=3.2.0",\n]\n\n'
         '[tool.pytest.ini_options]\npythonpath = ["src"]\ntestpaths = ["tests"]\n'
-        '\n[tool.mypy]\npython_version = "3.12"\nstrict = true\nmypath = "src"\n'
+        '\n[tool.mypy]\npython_version = "3.12"\nstrict = true\nmypy_path = "src"\n'
     )
     src_dir = proj / "src" / "calc"
     src_dir.mkdir(parents=True, exist_ok=True)
@@ -83,7 +83,7 @@ class PolyglotHomogeneityTests(unittest.TestCase):
 
             bad_screen = proj / "src" / "main" / "kotlin" / "ConfigScreen.kt"
             bad_screen.parent.mkdir(parents=True, exist_ok=True)
-            bad_screen.write_text('class ConfigScreen { val t = Component.' + 'literal("Hardcoded") }\n')
+            bad_screen.write_text('class ConfigScreen { val t = Component.literal("Hardcoded") }\n')
             self.assertEqual(ws.run_cmd(["task", "i18n"], cwd=proj, check=False).returncode, 0)
             ws.run_cmd(["task", "feature:add", "--", "minecraft"], cwd=proj)
             self.assertNotEqual(ws.run_cmd(["task", "i18n"], cwd=proj, check=False).returncode, 0)
@@ -112,9 +112,9 @@ class PolyglotHomogeneityTests(unittest.TestCase):
             proj = ws.project_dir("fortress-polyglot")
             ws.init_project(proj, "core,lang:python,addon:testing-fortress")
             for rel_path, bad_code in (
-                ("tests/test_bad.py", "def test_tautology() -> None:\n    assert " + "True\n"),
-                ("src/test/kotlin/SampleTest.kt", "@" + "Disabled\nclass SampleTest\n"),
-                ("tests/SampleTest.php", "<?php\ndeclare(strict_types=1);\nit('skips')->" + "skip();\n"),
+                ("tests/test_bad.py", "def test_tautology() -> None:\n    assert True\n"),
+                ("src/test/kotlin/SampleTest.kt", "@Disabled\nclass SampleTest\n"),
+                ("tests/SampleTest.php", "<?php\ndeclare(strict_types=1);\nit('skips')->skip();\n"),
             ):
                 target = proj / rel_path
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -144,7 +144,7 @@ class PolyglotHomogeneityTests(unittest.TestCase):
             self.assertNotIn('"DJ"', ruff_text)
             py_src = py_proj / "src"
             py_src.mkdir(parents=True, exist_ok=True)
-            (py_src / "handler.py").write_text("def handle(payload: " + "Any) -> None:\n    return None\n")
+            (py_src / "handler.py").write_text("def handle(payload: Any) -> None:\n    return None\n")
             self.assertNotEqual(ws.run_cmd(["task", "typecheck"], cwd=py_proj, check=False).returncode, 0)
 
     def test_fail_closed_when_project_file_or_binary_missing(self) -> None:

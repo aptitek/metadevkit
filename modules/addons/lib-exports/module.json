@@ -1,6 +1,10 @@
 {
   "id": "addon:lib-exports",
+  "aliases": ["lib-exports", "addons:lib-exports"],
   "layer": "addon",
+  "description": "Library Barrel & Package Exports Fortress: enforces explicit named re-exports in src/index.ts (zero export *), ./index.css stylesheet entry, and ESM package.json exports map",
   "depends_on": ["core", "lang:ts"],
-  "description": "Library Barrel & Package Exports Fortress: enforces explicit named re-exports in src/index.ts (zero export *), ./index.css stylesheet entry, and ESM package.json exports map"
+  "conflicts_with": [],
+  "commit_scopes": ["exports", "api"],
+  "conditional_files": []
 }

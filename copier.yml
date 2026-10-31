@@ -8,6 +8,7 @@ _exclude:
   - ".git"
   - ".cache"
   - ".task"
+  - "__pycache__"
   - ".venv"
   - "venv"
   - ".guardrails"

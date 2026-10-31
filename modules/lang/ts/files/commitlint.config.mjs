@@ -1,36 +1,32 @@
 // =============================================================================
-// commitlint.config.mjs — Strict Conventional Commits Configuration (core)
-// Enforces architectural domain scopes, mandatory non-empty scopes,
-// and descriptive commit subjects (>= 15 characters).
+// commitlint.config.mjs — Strict Conventional Commits Configuration (lang:ts)
+// Dynamically loads ARCHITECTURAL_SCOPES compiled from active modules in
+// .guardrails/commit-scopes.json (union of module.json commit_scopes).
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
-export const ARCHITECTURAL_SCOPES = [
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const scopesFile = resolve(__dirname, ".guardrails/commit-scopes.json");
+
+const DEFAULT_SCOPES = [
   "core",
-  "ui",
-  "tokens",
-  "routes",
-  "db",
-  "i18n",
   "ci",
   "lint",
-  "theme",
-  "worker",
-  "minecraft",
-  "quilt",
-  "fabric",
-  "mixin",
-  "network",
   "test",
-  "tests",
   "docs",
   "deps",
   "config",
   "security",
-  "a11y",
-  "storybook",
   "guardrails",
   "scripts",
 ];
+
+export const ARCHITECTURAL_SCOPES = existsSync(scopesFile)
+  ? JSON.parse(readFileSync(scopesFile, "utf8"))
+  : DEFAULT_SCOPES;
 
 export const ALLOWED_COMMIT_TYPES = [
   "feat",

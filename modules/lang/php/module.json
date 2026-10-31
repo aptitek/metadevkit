@@ -1,6 +1,10 @@
 {
   "id": "lang:php",
+  "aliases": ["php"],
   "layer": "lang",
   "description": "PHP stack with Composer, Laravel Pint formatting, PHPStan level max, and Pest testing",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["php", "domain"],
+  "conditional_files": []
 }

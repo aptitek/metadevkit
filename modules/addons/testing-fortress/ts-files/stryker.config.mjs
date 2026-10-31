@@ -5,9 +5,9 @@
 // =============================================================================
 import fs from "node:fs";
 
-const contentPathsFile = new URL("./.guardrails/content-md/paths.json", import.meta.url);
-const contentPaths = fs.existsSync(contentPathsFile)
-  ? JSON.parse(fs.readFileSync(contentPathsFile, "utf-8"))
+const pathsFile = new URL("./.guardrails/paths.json", import.meta.url);
+const extraPaths = fs.existsSync(pathsFile)
+  ? JSON.parse(fs.readFileSync(pathsFile, "utf-8"))
   : {};
 
 export default {
@@ -23,7 +23,7 @@ export default {
   mutate: [
     "src/**/*.ts",
     "src/**/*.tsx",
-    ...(contentPaths.mutate ?? []),
+    ...(extraPaths.mutate ?? []),
     "!**/*.test.ts",
     "!**/*.test.tsx",
     "!**/*.spec.ts",

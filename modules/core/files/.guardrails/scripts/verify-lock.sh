@@ -28,6 +28,31 @@ compute_sha256() {
   fi
 }
 
+# Structurally extract top-level YAML keys inside the `tasks:` mapping block
+# Supports unquoted keys, single/double-quoted keys ("guard:check":), and inline mappings (verify: { ... })
+extract_taskfile_keys() {
+  local tf="$1"
+  [[ ! -f "$tf" ]] && return 0
+  awk '
+    /^tasks:[[:space:]]*(#.*)?$/ { in_tasks = 1; indent = -1; next }
+    in_tasks && /^[^[:space:]#]/ { in_tasks = 0 }
+    in_tasks && /^[[:space:]]+["\047]?[A-Za-z0-9_.:-]+["\047]?:([[:space:]]|$)/ {
+      match($0, /^[[:space:]]+/)
+      curr_indent = RLENGTH
+      if (indent == -1) {
+        indent = curr_indent
+      }
+      if (curr_indent == indent) {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+        sub(/:.*$/, "", line)
+        gsub(/^["\047]|["\047]$/, "", line)
+        print line
+      }
+    }
+  ' "$tf"
+}
+
 if [[ ! -f "$MANIFEST_FILE" ]]; then
   echo -e "${RED}[GUARDRAILS ERROR] Missing manifest file: .guardrails/manifest.json${NC}" >&2
   exit 1
@@ -68,23 +93,46 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   fi
 done < "$LOCK_FILE"
 
-# Ensure no untracked files were injected into .guardrails/
-if [[ -d "${PROJECT_ROOT}/.guardrails" ]]; then
-  while IFS= read -r -d '' file; do
-    rel_file="${file#"${PROJECT_ROOT}/"}"
-    if [[ -z "${locked_paths[$rel_file]+x}" ]]; then
-      echo -e "${RED}[TAMPER DETECTED] Unregistered file injected into .guardrails/: ${rel_file}${NC}" >&2
+# Ensure no untracked files were injected into .guardrails/ OR .agents/
+for managed_dir in ".guardrails" ".agents"; do
+  if [[ -d "${PROJECT_ROOT}/${managed_dir}" ]]; then
+    while IFS= read -r -d '' file; do
+      rel_file="${file#"${PROJECT_ROOT}/"}"
+      if [[ -z "${locked_paths[$rel_file]+x}" ]]; then
+        echo -e "${RED}[TAMPER DETECTED] Unregistered file injected into ${managed_dir}/: ${rel_file}${NC}" >&2
+        violations=$((violations + 1))
+      fi
+    done < <(find "${PROJECT_ROOT}/${managed_dir}" -type f -print0)
+  fi
+done
+
+# Structural Taskfile.local.yml key intersection check across Taskfile.yml and ALL .guardrails/taskfiles/*.yml
+if [[ -f "$LOCAL_TASKFILE" ]]; then
+  declare -A protected_tasks=()
+  for sys_tf in "${PROJECT_ROOT}/Taskfile.yml" "${PROJECT_ROOT}/.guardrails/taskfiles/"*.yml; do
+    [[ ! -f "$sys_tf" ]] && continue
+    tf_base="$(basename "$sys_tf")"
+    tf_ns=""
+    if [[ "$tf_base" =~ ^Taskfile\.([a-z0-9_-]+)\.yml$ ]] && [[ "${BASH_REMATCH[1]}" != "base" ]]; then
+      tf_ns="${BASH_REMATCH[1]}"
+    fi
+    while IFS= read -r tkey; do
+      [[ -z "$tkey" ]] && continue
+      protected_tasks["$tkey"]=1
+      if [[ -n "$tf_ns" ]]; then
+        protected_tasks["${tf_ns}:${tkey}"]=1
+        protected_tasks["${tkey}:${tf_ns}"]=1
+      fi
+    done < <(extract_taskfile_keys "$sys_tf")
+  done
+
+  while IFS= read -r local_key; do
+    [[ -z "$local_key" ]] && continue
+    if [[ -n "${protected_tasks[$local_key]+x}" ]]; then
+      echo -e "${RED}[TAMPER DETECTED] Taskfile.local.yml attempts to override protected guardrail task '${local_key}'.${NC}" >&2
       violations=$((violations + 1))
     fi
-  done < <(find "${PROJECT_ROOT}/.guardrails" -type f -print0)
-fi
-
-# Inspect Taskfile.local.yml if present to forbid overriding core guardrail tasks
-if [[ -f "$LOCAL_TASKFILE" ]]; then
-  if grep -E -q '^[[:space:]]*(guard:check|guard:sync|verify|feature:add|mutate|a11y|i18n|typecheck|coverage)[[:space:]]*:' "$LOCAL_TASKFILE"; then
-    echo -e "${RED}[TAMPER DETECTED] Taskfile.local.yml attempts to override protected guardrail tasks (guard:check, guard:sync, verify, feature:add, mutate, a11y, i18n, typecheck, or coverage).${NC}" >&2
-    violations=$((violations + 1))
-  fi
+  done < <(extract_taskfile_keys "$LOCAL_TASKFILE")
 fi
 
 if [[ "$violations" -gt 0 ]]; then

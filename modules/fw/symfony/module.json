@@ -1,6 +1,10 @@
 {
   "id": "fw:symfony",
+  "aliases": ["symfony"],
   "layer": "fw",
+  "description": "Symfony 7.x+ Enterprise Architecture Fortress: thin invokable controllers, zero EntityManager flush in Controller, Twig XSS/a11y/i18n gates, container/YAML/Twig linting, PHPStan Symfony+Doctrine level max, and Infection mutation testing",
   "depends_on": ["core", "lang:php", "addon:ui-guardrails"],
-  "description": "Symfony 7.x+ Enterprise Architecture Fortress: thin invokable controllers, zero EntityManager flush in Controller, Twig XSS/a11y/i18n gates, container/YAML/Twig linting, PHPStan Symfony+Doctrine level max, and Infection mutation testing"
+  "conflicts_with": ["fw:django"],
+  "commit_scopes": ["symfony", "controller", "twig", "doctrine"],
+  "conditional_files": []
 }

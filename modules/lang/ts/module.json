@@ -1,6 +1,10 @@
 {
   "id": "lang:ts",
+  "aliases": ["ts"],
   "layer": "lang",
   "description": "TypeScript strict stack with pnpm, composable ESLint Flat Config, Knip dead-code detection, and Vitest coverage",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["ts", "ui", "types", "build"],
+  "conditional_files": []
 }

@@ -1,6 +1,10 @@
 {
   "id": "fw:astro",
+  "aliases": ["astro"],
   "layer": "fw",
   "description": "Astro framework rules: inherits lang:ts, astro check, island hydration boundaries, and accessibility",
-  "depends_on": ["core", "lang:ts", "addon:ui-guardrails"]
+  "depends_on": ["core", "lang:ts", "addon:ui-guardrails"],
+  "conflicts_with": ["fw:react-router"],
+  "commit_scopes": ["astro", "islands", "routes"],
+  "conditional_files": []
 }

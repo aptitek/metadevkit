@@ -1,6 +1,10 @@
 {
   "id": "fw:langchain",
+  "aliases": ["langchain", "langgraph", "addon:langchain", "addons:langchain"],
   "layer": "fw",
+  "description": "LangChain LCEL, LangGraph StateGraph, Gemini (langchain-google-genai), and Model Context Protocol (MCP) AI orchestration stack with SecretStr hygiene and 100% mocked external LLM tests",
   "depends_on": ["core", "lang:python"],
-  "description": "LangChain LCEL, LangGraph StateGraph, Gemini (langchain-google-genai), and Model Context Protocol (MCP) AI orchestration stack with SecretStr hygiene and 100% mocked external LLM tests"
+  "conflicts_with": [],
+  "commit_scopes": ["agents", "llm", "mcp"],
+  "conditional_files": []
 }

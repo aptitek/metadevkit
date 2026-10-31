@@ -1,6 +1,10 @@
 {
   "id": "fw:minecraft",
+  "aliases": ["minecraft"],
   "layer": "fw",
   "description": "Minecraft 1.21+ modding framework with Client/Server side-separation AST & Detekt locks, Spongeian Mixin & MixinExtras safety gates, Mojang GameTest Server harness, and resourcepack/datapack validators",
-  "depends_on": ["core", "lang:java", "addon:ui-guardrails"]
+  "depends_on": ["core", "lang:java", "addon:ui-guardrails"],
+  "conflicts_with": [],
+  "commit_scopes": ["minecraft", "mixin", "network"],
+  "conditional_files": []
 }

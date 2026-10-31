@@ -2,14 +2,18 @@
 # =============================================================================
 # validate-devkit.sh — Meta-Devkit Self-Governance Gate ("Who Guards the Guardians")
 # Enforces:
-#   1. Module manifest schema & DAG integrity (modules/**/module.json)
-#   2. Colocated Semgrep AST rules (modules/**/files/.guardrails/ast/*.yml;
+#   1. Algebraic module.json manifest schema (aliases, conflicts_with,
+#      commit_scopes, conditional_files), global alias uniqueness,
+#      irreflexive & symmetric conflicts_with, DAG acyclicity, satisfiability,
+#      layer hierarchy, and conditional_files source_dir existence
+#   2. Zero static file collisions across files/, conditional_files, and fragments/
+#   3. Colocated Semgrep AST rules (modules/**/files/.guardrails/ast/*.yml;
 #      forbids legacy root rules/ directory)
-#   3. Agent Skill frontmatter, Token Parsimony (<= 100 lines per SKILL.md),
-#      and ./references/*.md link resolution
-#   4. Strict Root Isolation (DRY): root .agents/skills/ and .guardrails/ast/
+#   4. Agent Skill frontmatter (strictly within --- block), Token Parsimony
+#      (<= 100 lines per SKILL.md), and ./references/*.md link resolution
+#   5. Strict Root Isolation (DRY): root .agents/skills/ and .guardrails/ast/
 #      only contain files from modules active in .guardrails/manifest.json
-#   5. JSON configuration validity across all modules
+#   6. JSON configuration validity across all modules
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 set -euo pipefail
@@ -30,18 +34,37 @@ while IFS= read -r -d '' json_file; do
     ERRORS=$((ERRORS + 1))
   fi
 done < <(find "${ROOT_DIR}" \
-  -type d \( -name ".git" -o -name "node_modules" -o -name ".venv" \) -prune \
+  -type d \( -name ".git" -o -name "node_modules" -o -name ".venv" -o -name ".cache" -o -name "__pycache__" \) -prune \
   -o -type f -name "*.json" -print0)
 
-# 2. Validate module.json manifests & dependency DAG (when modules/ directory exists)
+# 2. Validate module.json manifests, dependency DAG, alias uniqueness, symmetric conflicts_with,
+# satisfiability, layer hierarchy, conditional_files directories, and zero static file collisions
 if [[ -d "${ROOT_DIR}/modules" ]]; then
+  declare -A static_file_owners=()
+  declare -A fragment_targets=()
+  declare -A seen_aliases=()
+  declare -a all_mod_jsons=()
+
   while IFS= read -r -d '' mod_json; do
+    all_mod_jsons+=("${mod_json}")
+    mod_dir="$(dirname "${mod_json}")"
     mod_id="$(jq -r '.id // empty' "${mod_json}")"
     mod_layer="$(jq -r '.layer // empty' "${mod_json}")"
     mod_desc="$(jq -r '.description // empty' "${mod_json}")"
 
     if [[ -z "${mod_id}" || -z "${mod_layer}" || -z "${mod_desc}" ]]; then
       echo "❌ [DEVKIT GATE] ${mod_json}: Missing required fields (id, layer, description)." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
+
+    if ! jq -e '
+      (.aliases | type == "array") and
+      (.depends_on | type == "array") and
+      (.conflicts_with | type == "array") and
+      (.commit_scopes | (type == "array" and length > 0)) and
+      (.conditional_files | type == "array")
+    ' "${mod_json}" >/dev/null 2>&1; then
+      echo "❌ [DEVKIT GATE] ${mod_json}: Missing or invalid V5 algebraic fields (aliases, depends_on, conflicts_with, commit_scopes, conditional_files)." >&2
       ERRORS=$((ERRORS + 1))
     fi
 
@@ -53,26 +76,142 @@ if [[ -d "${ROOT_DIR}/modules" ]]; then
         ;;
     esac
 
-    while IFS= read -r dep_id; do
-      [[ -z "${dep_id}" ]] && continue
+    # Verify global uniqueness of id and aliases across all modules
+    while IFS= read -r key_name; do
+      [[ -z "${key_name}" ]] && continue
+      if [[ -n "${seen_aliases[$key_name]+x}" ]]; then
+        echo "❌ [DEVKIT ALIAS GATE] ${mod_json}: Duplicate module ID or alias '${key_name}' (already claimed by '${seen_aliases[$key_name]}')." >&2
+        ERRORS=$((ERRORS + 1))
+      else
+        seen_aliases["$key_name"]="$mod_id"
+      fi
+    done < <(jq -r '([.id] + (.aliases // []))[]' "${mod_json}")
+
+    # Verify existence of source_dir for every conditional_files entry and check collisions
+    while IFS= read -r cond_src_dir; do
+      [[ -z "${cond_src_dir}" ]] && continue
+      if [[ ! -d "${mod_dir}/${cond_src_dir}" ]]; then
+        echo "❌ [DEVKIT CONDITIONAL FILES GATE] ${mod_json}: conditional_files source_dir '${cond_src_dir}' does not exist at '${mod_dir}/${cond_src_dir}'." >&2
+        ERRORS=$((ERRORS + 1))
+      else
+        while IFS= read -r -d '' cfile; do
+          rel_c="${cfile#"${mod_dir}/${cond_src_dir}/"}"
+          if [[ -n "${static_file_owners[$rel_c]+x}" ]]; then
+            echo "❌ [DEVKIT COLLISION GATE] Conditional file '${rel_c}' in '${mod_id}' collides with '${static_file_owners[$rel_c]}'." >&2
+            ERRORS=$((ERRORS + 1))
+          else
+            static_file_owners["$rel_c"]="$mod_id"
+          fi
+        done < <(find "${mod_dir}/${cond_src_dir}" -type f -print0)
+      fi
+    done < <(jq -r '.conditional_files[]?.source_dir // empty' "${mod_json}")
+
+    while IFS= read -r ref_id; do
+      [[ -z "${ref_id}" ]] && continue
       dep_rel=""
-      case "${dep_id}" in
+      case "${ref_id}" in
         core) dep_rel="modules/core" ;;
-        lang:*) dep_rel="modules/lang/${dep_id#lang:}" ;;
-        fw:*) dep_rel="modules/fw/${dep_id#fw:}" ;;
-        addon:*) dep_rel="modules/addons/${dep_id#addon:}" ;;
+        lang:*) dep_rel="modules/lang/${ref_id#lang:}" ;;
+        fw:*) dep_rel="modules/fw/${ref_id#fw:}" ;;
+        addon:*) dep_rel="modules/addons/${ref_id#addon:}" ;;
         *)
-          echo "❌ [DEVKIT GATE] ${mod_json}: Invalid dependency ID '${dep_id}'." >&2
+          echo "❌ [DEVKIT GATE] ${mod_json}: Invalid module reference ID '${ref_id}'." >&2
           ERRORS=$((ERRORS + 1))
           continue
           ;;
       esac
       if [[ ! -f "${ROOT_DIR}/${dep_rel}/module.json" ]]; then
-        echo "❌ [DEVKIT GATE] ${mod_json}: Dependency '${dep_id}' (${dep_rel}/module.json) does not exist." >&2
+        echo "❌ [DEVKIT GATE] ${mod_json}: Referenced module '${ref_id}' (${dep_rel}/module.json) does not exist." >&2
         ERRORS=$((ERRORS + 1))
       fi
-    done < <(jq -r '.depends_on[]?' "${mod_json}")
+    done < <(jq -r '(.depends_on[]?, .conflicts_with[]?, .conditional_files[]?.when_all[]?)' "${mod_json}")
+
+    # Check static file collision freedom in files/
+    if [[ -d "${mod_dir}/files" ]]; then
+      while IFS= read -r -d '' sfile; do
+        rel_s="${sfile#"${mod_dir}/files/"}"
+        if [[ -n "${static_file_owners[$rel_s]+x}" ]]; then
+          echo "❌ [DEVKIT COLLISION GATE] Static file '${rel_s}' is defined in both '${static_file_owners[$rel_s]}' and '${mod_id}'. Move shared configs to 'fragments/'." >&2
+          ERRORS=$((ERRORS + 1))
+        else
+          static_file_owners["$rel_s"]="$mod_id"
+        fi
+      done < <(find "${mod_dir}/files" -type f -print0)
+    fi
+
+    # Record fragment target paths
+    if [[ -d "${mod_dir}/fragments" ]]; then
+      while IFS= read -r -d '' ffile; do
+        rel_f="${ffile#"${mod_dir}/fragments/"}"
+        [[ "$rel_f" == *.toml.json ]] && rel_f="${rel_f%.json}"
+        fragment_targets["$rel_f"]="$mod_id"
+      done < <(find "${mod_dir}/fragments" -type f -print0)
+    fi
   done < <(find "${ROOT_DIR}/modules" -type f -name "module.json" -print0)
+
+  # Ensure no fragment target path collides with a static file in files/ or conditional_files/
+  for f_target in "${!fragment_targets[@]}"; do
+    if [[ -n "${static_file_owners[$f_target]+x}" ]]; then
+      echo "❌ [DEVKIT COLLISION GATE] Fragment target '${f_target}' ('${fragment_targets[$f_target]}') collides with static file in '${static_file_owners[$f_target]}'." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
+  done
+
+  # Verify DAG acyclicity, satisfiability, layer hierarchy, and conflicts_with symmetry
+  if [[ "${#all_mod_jsons[@]}" -gt 0 ]]; then
+    while IFS= read -r dag_err; do
+      [[ -z "${dag_err}" ]] && continue
+      echo "❌ [DEVKIT DAG GATE] ${dag_err}" >&2
+      ERRORS=$((ERRORS + 1))
+    done < <(jq -rs '
+      (INDEX(.[]; .id)) as $by_id |
+      def layer_rank($l):
+        if $l == "core" then 0
+        elif $l == "lang" then 1
+        elif $l == "fw" then 2
+        elif $l == "addon" then 3
+        else 9 end;
+      def closure($start; $seen):
+        if ($seen | index($start)) != null then
+          ["CYCLE:\($start)"]
+        else
+          ([$start] + ([($by_id[$start].depends_on // [])[] as $d | closure($d; $seen + [$start])[]] | unique))
+        end;
+      [
+        .[] as $m |
+        # 1. Irreflexivity and Symmetry of conflicts_with
+        (
+          ($m.conflicts_with // [])[] as $c |
+          if $c == $m.id then
+            "Module \($m.id) declares a self-conflict (irreflexivity violation)."
+          elif (($by_id[$c].conflicts_with // []) | index($m.id)) == null then
+            "Asymmetric conflict: \($m.id) conflicts_with \($c), but \($c) does not declare \($m.id) in conflicts_with."
+          else empty end
+        ),
+        # 2. Layer hierarchy on core and lang (core/lang must never depend on fw/addon)
+        (
+          select($m.layer == "core" or $m.layer == "lang") |
+          ($m.depends_on // [])[] as $d |
+          select(layer_rank($by_id[$d].layer) > layer_rank($m.layer)) |
+          "Layer hierarchy violation: \($m.id) (\($m.layer)) cannot depend on higher layer \($d) (\($by_id[$d].layer))."
+        ),
+        # 3. Acyclicity & Satisfiability of transitive closure
+        (
+          closure($m.id; []) as $cl |
+          if any($cl[]; startswith("CYCLE:")) then
+            "Dependency cycle detected starting from \($m.id)."
+          else
+            (
+              $cl[] as $u |
+              ($by_id[$u].conflicts_with // [])[] as $v |
+              select(($cl | index($v)) != null) |
+              "Unsatisfiable module \($m.id): transitive dependencies include conflicting pair (\($u), \($v))."
+            )
+          end
+        )
+      ] | unique | .[]
+    ' "${all_mod_jsons[@]}")
+  fi
 
   while IFS= read -r -d '' mise_frag; do
     if grep -E -q '=\s*"latest"' "${mise_frag}"; then
@@ -100,7 +239,7 @@ done < <(find "${ROOT_DIR}" \
   -type d \( -name ".git" -o -name "node_modules" -o -name ".venv" \) -prune \
   -o -type f -path "*/.guardrails/ast/*.yml" -print0)
 
-# 4. Validate Agent Skills (Frontmatter, Token Parsimony <= 100 lines, and Reference links)
+# 4. Validate Agent Skills (Frontmatter strictly inside --- block, Token Parsimony <= 100 lines, and Reference links)
 while IFS= read -r -d '' skill_file; do
   skill_dir="$(dirname "${skill_file}")"
   expected_name="$(basename "${skill_dir}")"
@@ -111,19 +250,20 @@ while IFS= read -r -d '' skill_file; do
     ERRORS=$((ERRORS + 1))
   fi
 
-  if [[ "$(head -n 1 "${skill_file}")" != "---" ]]; then
-    echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Missing YAML frontmatter opening '---'." >&2
-    ERRORS=$((ERRORS + 1))
-  fi
+  frontmatter="$(awk 'NR==1 && /^---[[:space:]]*$/ { in_fm=1; next } in_fm && /^---[[:space:]]*$/ { exit } in_fm { print }' "${skill_file}")"
 
-  if ! grep -E -q "^name:\s*${expected_name}\s*$" "${skill_file}"; then
-    echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Frontmatter 'name:' must match directory '${expected_name}'." >&2
+  if [[ -z "${frontmatter}" ]]; then
+    echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Missing valid YAML frontmatter block delimited by '---'." >&2
     ERRORS=$((ERRORS + 1))
-  fi
-
-  if ! grep -E -q '^description:' "${skill_file}"; then
-    echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Missing 'description:' in YAML frontmatter." >&2
-    ERRORS=$((ERRORS + 1))
+  else
+    if ! grep -E -q "^name:[[:space:]]*${expected_name}[[:space:]]*$" <<< "${frontmatter}"; then
+      echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Frontmatter 'name:' must match directory '${expected_name}'." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
+    if ! grep -E -q '^description:' <<< "${frontmatter}"; then
+      echo "❌ [DEVKIT SKILL GATE] ${skill_file}: Missing 'description:' in YAML frontmatter." >&2
+      ERRORS=$((ERRORS + 1))
+    fi
   fi
 
   while IFS= read -r ref_rel; do

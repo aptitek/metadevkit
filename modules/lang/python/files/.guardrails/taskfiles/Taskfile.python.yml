@@ -8,6 +8,7 @@ version: '3'
 env:
   UV_LINK_MODE: '{{.UV_LINK_MODE | default "copy"}}'
   COVERAGE_FILE: '{{.COVERAGE_FILE | default ".cache/.coverage"}}'
+  PYTHONDONTWRITEBYTECODE: '1'
 
 tasks:
   setup:

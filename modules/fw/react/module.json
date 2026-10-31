@@ -1,6 +1,10 @@
 {
   "id": "fw:react",
+  "aliases": ["react"],
   "layer": "fw",
   "description": "React framework rules: AST hooks enforcement, jsx-a11y, i18n no-raw-text, max 150 lines per component",
-  "depends_on": ["core", "lang:ts", "addon:ui-guardrails"]
+  "depends_on": ["core", "lang:ts", "addon:ui-guardrails"],
+  "conflicts_with": [],
+  "commit_scopes": ["ui", "components", "hooks"],
+  "conditional_files": []
 }

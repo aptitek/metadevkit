@@ -1,6 +1,10 @@
 {
   "id": "lang:java",
+  "aliases": ["java"],
   "layer": "lang",
   "description": "Java stack with Gradle, Spotless formatting, PMD static analysis, and JaCoCo coverage",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["java", "jvm", "gradle"],
+  "conditional_files": []
 }

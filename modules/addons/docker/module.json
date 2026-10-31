@@ -1,6 +1,10 @@
 {
   "id": "addon:docker",
+  "aliases": ["docker", "addons:docker"],
   "layer": "addon",
+  "description": "Docker & Compose Security Fortress: multi-stage builds, pinned image tags (bans :latest), non-root USER enforcement, and /run/secrets tmpfs secret injection",
   "depends_on": ["core"],
-  "description": "Docker & Compose Security Fortress: multi-stage builds, pinned image tags (bans :latest), non-root USER enforcement, and /run/secrets tmpfs secret injection"
+  "conflicts_with": [],
+  "commit_scopes": ["docker", "container"],
+  "conditional_files": []
 }

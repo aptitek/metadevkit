@@ -1,6 +1,10 @@
 {
   "id": "lang:shell",
+  "aliases": ["shell", "bash", "lang:bash"],
   "layer": "lang",
   "description": "Defensive Bash & POSIX Shell engineering stack (bash -n, strict set -euo pipefail, shellcheck, shfmt, and zero eval/curl-pipe-sh AST gates)",
-  "depends_on": ["core"]
+  "depends_on": ["core"],
+  "conflicts_with": [],
+  "commit_scopes": ["shell", "cli"],
+  "conditional_files": []
 }

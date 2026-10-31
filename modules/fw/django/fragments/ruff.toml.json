@@ -1,0 +1,8 @@
+{
+  "lint": {
+    "extend-select": ["DJ"],
+    "extend-per-file-ignores": {
+      "*/migrations/*.py": ["DJ001", "E501"]
+    }
+  }
+}

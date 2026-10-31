@@ -21,35 +21,38 @@ main() {
   if [[ "${OS:-}" == "Windows_NT" ]] || uname -s 2>/dev/null | grep -qiE "mingw|msys|cygwin"; then
     if [[ ! -x "/c/msys64/usr/bin/bash.exe" && ! -x "C:/msys64/usr/bin/bash.exe" ]] && command -v winget.exe >/dev/null 2>&1; then
       echo "📦 [Windows] Installing MSYS2 via winget..."
-      winget.exe install -e --id MSYS2.MSYS2 --accept-source-agreements --accept-package-agreements </dev/null || true
+      winget.exe install -e --id MSYS2.MSYS2 --accept-source-agreements --accept-package-agreements </dev/null || \
+        [[ -x "/c/msys64/usr/bin/bash.exe" || -x "C:/msys64/usr/bin/bash.exe" ]]
     fi
     for msys_bin in "/c/msys64/usr/bin" "C:/msys64/usr/bin"; do
       if [[ -d "${msys_bin}" ]]; then
         export PATH="${msys_bin}:${PATH}"
         if [[ -x "${msys_bin}/pacman.exe" ]]; then
           echo "📦 [MSYS2] Ensuring bash, git, jq, curl, and tar are installed..."
-          "${msys_bin}/pacman.exe" -S --noconfirm --needed bash git jq curl tar </dev/null || true
+          "${msys_bin}/pacman.exe" -S --noconfirm --needed bash git jq curl tar </dev/null
         fi
         break
       fi
     done
     if ! command -v task >/dev/null 2>&1 && ! command -v go-task >/dev/null 2>&1 && command -v winget.exe >/dev/null 2>&1; then
       echo "📦 [Windows] Installing go-task via winget..."
-      winget.exe install -e --id Task.Task --accept-source-agreements --accept-package-agreements </dev/null || true
+      winget.exe install -e --id Task.Task --accept-source-agreements --accept-package-agreements </dev/null || \
+        command -v task >/dev/null 2>&1 || command -v go-task >/dev/null 2>&1
     fi
   fi
 
   # 2. Ensure mise is available (cross-platform toolchain manager)
-  if ! command -v mise >/dev/null 2>&1; then
+  if [[ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ]] && ! command -v mise >/dev/null 2>&1; then
     if command -v winget.exe >/dev/null 2>&1; then
-      winget.exe install -e --id jdx.mise --accept-source-agreements --accept-package-agreements </dev/null || true
+      winget.exe install -e --id jdx.mise --accept-source-agreements --accept-package-agreements </dev/null || \
+        command -v mise >/dev/null 2>&1
     elif command -v brew >/dev/null 2>&1; then
-      brew install mise </dev/null || true
+      brew install mise </dev/null
     elif command -v curl >/dev/null 2>&1; then
       local mise_tmp
       mise_tmp="$(mktemp -d)"
       curl -fsSL "https://mise.run" -o "${mise_tmp}/install-mise.sh"
-      sh "${mise_tmp}/install-mise.sh" </dev/null || true
+      sh "${mise_tmp}/install-mise.sh" </dev/null
       rm -rf "${mise_tmp}"
       export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:${PATH}"
     fi
@@ -58,10 +61,10 @@ main() {
   # 3. Ensure task (go-task) and jq are available via mise if not already on PATH
   if command -v mise >/dev/null 2>&1; then
     if ! command -v task >/dev/null 2>&1 && ! command -v go-task >/dev/null 2>&1; then
-      mise use -g "go-task@3.42" </dev/null || true
+      mise use -g "go-task@3.42" </dev/null
     fi
     if ! command -v jq >/dev/null 2>&1; then
-      mise use -g "jq@1.7" </dev/null || true
+      mise use -g "jq@1.7" </dev/null
     fi
     export PATH="${HOME}/.local/share/mise/shims:${HOME}/.local/bin:${PATH}"
   fi
@@ -97,9 +100,9 @@ main() {
       init --target "." --source "${tmp_src}" --modules "${modules}" </dev/null
   fi
 
-  if command -v mise >/dev/null 2>&1; then
-    mise trust -a </dev/null || true
-    mise install </dev/null || true
+  if [[ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ]] && command -v mise >/dev/null 2>&1; then
+    mise trust -a </dev/null
+    mise install </dev/null
   fi
 }
 

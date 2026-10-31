@@ -1,6 +1,10 @@
 {
   "id": "addon:ffmpeg",
+  "aliases": ["ffmpeg", "addons:ffmpeg"],
   "layer": "addon",
+  "description": "FFmpeg / ffprobe Audio & Media Pipeline Fortress: zero shell=True subprocess execution, async/thread-pool non-blocking execution, and -16 LUFS loudnorm standards",
   "depends_on": ["core", "lang:python"],
-  "description": "FFmpeg / ffprobe Audio & Media Pipeline Fortress: zero shell=True subprocess execution, async/thread-pool non-blocking execution, and -16 LUFS loudnorm standards"
+  "conflicts_with": [],
+  "commit_scopes": ["audio", "media", "ffmpeg"],
+  "conditional_files": []
 }

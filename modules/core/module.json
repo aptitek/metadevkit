@@ -1,6 +1,21 @@
 {
   "id": "core",
+  "aliases": [],
   "layer": "core",
   "description": "Universal mandatory base: mise, go-task (Taskfile contract), lefthook, jq, trivy, SHA-256 lock verification, and AI guardrails",
-  "depends_on": []
+  "depends_on": [],
+  "conflicts_with": [],
+  "commit_scopes": [
+    "core",
+    "ci",
+    "lint",
+    "test",
+    "docs",
+    "deps",
+    "config",
+    "security",
+    "guardrails",
+    "scripts"
+  ],
+  "conditional_files": []
 }

@@ -124,6 +124,11 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             )
             self.assertEqual(ws.read_manifest_modules(standalone), ["core", "lang:shell"])
             self.assertTrue((standalone / ".gitattributes").is_file())
+            ws.run_cmd(
+                ["task", "init", "MODULES=core,lang:shell,addon:docker", f"REPO_URL={REPO_ROOT}"],
+                cwd=standalone,
+            )
+            self.assertEqual(ws.read_manifest_modules(standalone), ["core", "lang:shell", "addon:docker"])
             ws.run_cmd(["task", "verify"], cwd=standalone)
 
             boot_dir = ws.project_dir("boot-script-app")

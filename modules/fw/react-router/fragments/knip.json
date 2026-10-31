@@ -1,0 +1,4 @@
+{
+  "entry": ["app/root.tsx", "app/routes/**/*.{ts,tsx}"],
+  "project": ["app/**/*.{ts,tsx}"]
+}

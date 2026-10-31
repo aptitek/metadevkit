@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # validate-testing-fortress.sh — Polyglot Lock 6 Test Assertion Purity Gate
-# Enforces across TypeScript, Python, Java, Kotlin, and PHP:
+# Enforces across TypeScript, Python (via `ast`), Java, Kotlin, and PHP:
 #   1. Zero skipped or focused tests (.skip, .only, @pytest.mark.skip,
 #      pytest.skip, @Disabled, xit, xdescribe, ->skip(), ->only())
 #   2. Zero tautological or weak assertions (toBeTruthy, toBeFalsy,
@@ -38,23 +38,81 @@ done < <(find "${ROOT_DIR}" \
   -type d \( -name ".git" -o -name "node_modules" -o -name "dist" -o -name "build" -o -name ".guardrails" -o -name "modules" \) -prune \
   -o -type f \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -print0)
 
-# 3. Scan Python test files (tests/**/test_*.py, tests/**/*_test.py)
-SKIP_PY_RE='@(pytest\.mark\.skip|unittest\.skip)\b|\b(pytest|unittest)\.skip\s*\('
-TAUT_PY_RE='^[[:space:]]*(assert[[:space:]]+(True|False)\b|self\.assert(True|False)\s*\(\s*(True|False)\s*\))'
-
+# 3. AST-based Python Test Purity Analysis (tests/**/test_*.py, tests/**/*_test.py)
 if [[ -d "${ROOT_DIR}/tests" ]]; then
-  while IFS= read -r -d '' py_test; do
-    if grep -vE '^[[:space:]]*#' "${py_test}" | grep -E "${SKIP_PY_RE}" >/dev/null 2>&1; then
-      echo "❌ [TESTING FORTRESS] ${py_test}: Skipped test (@pytest.mark.skip / unittest.skip) is forbidden." >&2
-      ERRORS=$((ERRORS + 1))
-    fi
-    if grep -vE '^[[:space:]]*#' "${py_test}" | grep -E "${TAUT_PY_RE}" >/dev/null 2>&1; then
-      echo "❌ [TESTING FORTRESS] ${py_test}: Tautological assertion (assert True / assertTrue(True)) is forbidden." >&2
-      ERRORS=$((ERRORS + 1))
-    fi
-  done < <(find "${ROOT_DIR}/tests" \
-    -type d \( -name "__pycache__" -o -name ".pytest_cache" \) -prune \
-    -o -type f \( -name "test_*.py" -o -name "*_test.py" \) -print0)
+  if ! python3 - "${ROOT_DIR}/tests" <<'PYEOF'
+import ast
+import pathlib
+import sys
+
+tests_root = pathlib.Path(sys.argv[1])
+SKIP_ATTRS = {"skip", "skipif", "skipTest"}
+
+
+def is_skip_expr(node: ast.AST) -> bool:
+    target = node.func if isinstance(node, ast.Call) else node
+    if isinstance(target, ast.Attribute) and target.attr in SKIP_ATTRS:
+        return True
+    if isinstance(target, ast.Name) and target.id in SKIP_ATTRS:
+        return True
+    return False
+
+
+def is_tautological_node(node: ast.AST) -> bool:
+    if isinstance(node, ast.Assert):
+        if isinstance(node.test, ast.Constant):
+            return True
+        if (
+            isinstance(node.test, ast.Compare)
+            and len(node.test.comparators) == 1
+            and isinstance(node.test.left, ast.Constant)
+            and isinstance(node.test.comparators[0], ast.Constant)
+            and node.test.left.value == node.test.comparators[0].value
+        ):
+            return True
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr in ("assertTrue", "assertFalse") and node.args:
+            if isinstance(node.args[0], ast.Constant):
+                return True
+    return False
+
+
+errors = 0
+for py_test in sorted(tests_root.rglob("*.py")):
+    if "__pycache__" in py_test.parts or ".pytest_cache" in py_test.parts:
+        continue
+    if not (py_test.name.startswith("test_") or py_test.name.endswith("_test.py")):
+        continue
+    try:
+        tree = ast.parse(py_test.read_text(encoding="utf-8", errors="replace"), filename=str(py_test))
+    except SyntaxError as exc:
+        sys.stderr.write(f"❌ [TESTING FORTRESS] {py_test}:{exc.lineno}: SyntaxError: {exc.msg}\n")
+        errors += 1
+        continue
+
+    has_skip = False
+    has_tautology = False
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if any(is_skip_expr(dec) for dec in node.decorator_list):
+                has_skip = True
+        elif isinstance(node, ast.Call) and is_skip_expr(node):
+            has_skip = True
+        if is_tautological_node(node):
+            has_tautology = True
+
+    if has_skip:
+        sys.stderr.write(f"❌ [TESTING FORTRESS] {py_test}: Skipped test (@pytest.mark.skip / unittest.skip) is forbidden.\n")
+        errors += 1
+    if has_tautology:
+        sys.stderr.write(f"❌ [TESTING FORTRESS] {py_test}: Tautological assertion (assert True / assertTrue(True)) is forbidden.\n")
+        errors += 1
+
+sys.exit(1 if errors > 0 else 0)
+PYEOF
+  then
+    ERRORS=$((ERRORS + 1))
+  fi
 fi
 
 # 4. Scan JVM (Java / Kotlin) test files (src/test/**/*.java, src/test/**/*.kt)

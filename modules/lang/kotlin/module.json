@@ -1,6 +1,10 @@
 {
   "id": "lang:kotlin",
+  "aliases": ["kotlin"],
   "layer": "lang",
   "description": "Kotlin 2.x (K2) JVM stack with Gradle Kotlin DSL, Detekt static analysis (maxIssues: 0, warningsAsErrors: true, detekt-formatting), Kotest JUnit5 + Property Testing, Coroutines Test, and JaCoCo coverage",
-  "depends_on": ["core", "lang:java"]
+  "depends_on": ["core", "lang:java"],
+  "conflicts_with": [],
+  "commit_scopes": ["kotlin", "coroutines"],
+  "conditional_files": []
 }

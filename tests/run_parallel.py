@@ -15,33 +15,44 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CACHE_FILE = REPO_ROOT / ".cache" / "unittest" / "results.json"
 
 
+def _discover_tracked_paths() -> list[Path]:
+    """Discover locked files from .guardrails.lock plus master module/script/test directories."""
+    paths: list[Path] = []
+    lock_file = REPO_ROOT / ".guardrails.lock"
+    if lock_file.is_file():
+        for line in lock_file.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#") and "  " in stripped:
+                rel = stripped.split("  ", 1)[1]
+                candidate = REPO_ROOT / rel
+                if candidate.is_file():
+                    paths.append(candidate)
+    for extra in (
+        ".guardrails.lock",
+        "uv.lock",
+        "pyproject.toml",
+        "copier.yml",
+        "README.md",
+        "modules",
+        "scripts",
+        "tests/helpers.py",
+    ):
+        target = REPO_ROOT / extra
+        if target.exists():
+            paths.append(target)
+    return paths
+
+
 def _compute_repo_fingerprint() -> str:
-    """Compute a fast SHA-256 digest of all root configs, modules/, scripts/, and tests/helpers.py."""
+    """Compute a fast SHA-256 digest of all locked configs, modules/, scripts/, and tests/helpers.py."""
     hasher = hashlib.sha256()
-    tracked_roots = [
-        REPO_ROOT / "Taskfile.yml",
-        REPO_ROOT / "mise.toml",
-        REPO_ROOT / "ruff.toml",
-        REPO_ROOT / "pyproject.toml",
-        REPO_ROOT / "copier.yml",
-        REPO_ROOT / "AGENTS.md",
-        REPO_ROOT / "README.md",
-        REPO_ROOT / ".gitignore",
-        REPO_ROOT / ".gitattributes",
-        REPO_ROOT / ".guardrails.lock",
-        REPO_ROOT / ".guardrails",
-        REPO_ROOT / ".agents",
-        REPO_ROOT / "modules",
-        REPO_ROOT / "scripts",
-        REPO_ROOT / "tests" / "helpers.py",
-    ]
-    for root in tracked_roots:
+    for root in _discover_tracked_paths():
         if root.is_file():
             hasher.update(str(root.relative_to(REPO_ROOT)).encode("utf-8"))
             hasher.update(root.read_bytes())
         elif root.is_dir():
             for path in sorted(root.rglob("*")):
-                if path.is_file():
+                if path.is_file() and "__pycache__" not in path.parts:
                     hasher.update(str(path.relative_to(REPO_ROOT)).encode("utf-8"))
                     hasher.update(path.read_bytes())
     return hasher.hexdigest()
@@ -57,9 +68,12 @@ def _file_digest(path: Path, repo_fp: str) -> str:
 def _run_single_test_file(test_file: Path) -> tuple[str, int, str]:
     """Execute a single unittest module in a subprocess and return (name, code, output)."""
     mod_name = f"tests.{test_file.stem}"
+    env = dict(os.environ)
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     proc = subprocess.run(
-        [sys.executable, "-m", "unittest", mod_name, "-v"],
+        [sys.executable, "-B", "-m", "unittest", mod_name, "-v"],
         cwd=str(REPO_ROOT),
+        env=env,
         text=True,
         capture_output=True,
         check=False,
@@ -110,9 +124,10 @@ def main() -> int:
     cache_data = _load_cache(use_cache)
 
     pending = [
-        (tf, _file_digest(tf, repo_fp))
+        (tf, digest)
         for tf in test_files
-        if not (use_cache and cache_data.get(tf.name) == _file_digest(tf, repo_fp))
+        if (digest := _file_digest(tf, repo_fp))
+        and not (use_cache and cache_data.get(tf.name) == digest)
     ]
     cached_hits = len(test_files) - len(pending)
     failures = _execute_pending(pending, cache_data)

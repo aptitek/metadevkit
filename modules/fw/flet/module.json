@@ -1,6 +1,10 @@
 {
   "id": "fw:flet",
+  "aliases": ["flet"],
   "layer": "fw",
   "description": "Flet (Flutter for Python) UI framework with Material Design 3 semantic tokens, 5-level Atomic Design hierarchy, and Playwright E2E testing",
-  "depends_on": ["core", "lang:python", "addon:ui-guardrails"]
+  "depends_on": ["core", "lang:python", "addon:ui-guardrails"],
+  "conflicts_with": ["fw:django"],
+  "commit_scopes": ["ui", "flet", "theme"],
+  "conditional_files": []
 }

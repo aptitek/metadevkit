@@ -45,6 +45,8 @@ Write-Host "📥 Downloading master Taskfile.yml..." -ForegroundColor Cyan
 Invoke-WebRequest -UseBasicParsing -Uri $RawTaskfileUrl -OutFile "Taskfile.yml"
 
 # 5. Execute task init inside MSYS2 bash with C:\msys64\usr\bin on PATH
+# Refresh current process PATH from Machine + User registry after winget installations
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 $WorkDir = (Get-Location).Path -replace '\\', '/'
 & $MsysBash -lc "cd '$WorkDir' && export PATH='/c/msys64/usr/bin:`$PATH' && task init MODULES='$Modules' REPO_URL='$RepoUrl'"
 Write-Host "✅ Project initialized with modules: $Modules" -ForegroundColor Green

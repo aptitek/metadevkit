@@ -40,6 +40,7 @@ class RepoTestWorkspace:
             self._env.setdefault("UV_CACHE_DIR", str(tmp_root / "uv-cache"))
         self._env["UV_PYTHON"] = sys.executable
         self._env["UV_LINK_MODE"] = "copy"
+        self._env["PYTHONDONTWRITEBYTECODE"] = "1"
         self._env["GUARDRAILS_SKIP_SELFTEST"] = "1"
         self._env["GUARDRAILS_FIXTURE_MODE"] = "1" if fixture_mode else "0"
 

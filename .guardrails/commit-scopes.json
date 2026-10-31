@@ -1,0 +1,20 @@
+[
+  "api",
+  "ast",
+  "ci",
+  "cli",
+  "config",
+  "core",
+  "deps",
+  "devkit",
+  "docs",
+  "guardrails",
+  "lint",
+  "modules",
+  "python",
+  "scripts",
+  "security",
+  "shell",
+  "skills",
+  "test"
+]

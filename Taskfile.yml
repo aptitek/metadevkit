@@ -46,33 +46,33 @@ tasks:
         fi
 
   bootstrap:
-    desc: "Auto-install prerequisites (MSYS2 on Windows, mise, jq, git) and initialize project from remote master"
+    desc: "Auto-provision prerequisites (MSYS2 on Windows, mise) and initialize project from local or remote master"
     cmds:
       - |
         if [ "${OS:-}" = "Windows_NT" ] || uname -s 2>/dev/null | grep -qiE "mingw|msys|cygwin"; then
           if [ ! -x "/c/msys64/usr/bin/bash.exe" ] && [ ! -x "C:/msys64/usr/bin/bash.exe" ] && command -v winget.exe >/dev/null 2>&1; then
-            winget.exe install -e --id MSYS2.MSYS2 --accept-source-agreements --accept-package-agreements || true
+            winget.exe install -e --id MSYS2.MSYS2 --accept-source-agreements --accept-package-agreements </dev/null || [ -x "/c/msys64/usr/bin/bash.exe" ] || [ -x "C:/msys64/usr/bin/bash.exe" ]
           fi
           for msys_bin in "/c/msys64/usr/bin" "C:/msys64/usr/bin"; do
             if [ -d "$msys_bin" ]; then
               export PATH="${msys_bin}:${PATH}"
               if [ -x "${msys_bin}/pacman.exe" ]; then
-                "${msys_bin}/pacman.exe" -S --noconfirm --needed bash git jq curl tar || true
+                "${msys_bin}/pacman.exe" -S --noconfirm --needed bash git jq curl tar </dev/null
               fi
               break
             fi
           done
         fi
-        if ! command -v mise >/dev/null 2>&1; then
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ] && ! command -v mise >/dev/null 2>&1; then
           if command -v winget.exe >/dev/null 2>&1; then
-            winget.exe install -e --id jdx.mise --accept-source-agreements --accept-package-agreements || true
+            winget.exe install -e --id jdx.mise --accept-source-agreements --accept-package-agreements </dev/null || command -v mise >/dev/null 2>&1
           elif command -v brew >/dev/null 2>&1; then
-            brew install mise || true
+            brew install mise </dev/null
           elif command -v curl >/dev/null 2>&1; then
             mise_tmp="$(mktemp -d)"
-            curl -fsSL https://mise.run -o "${mise_tmp}/install.sh" && sh "${mise_tmp}/install.sh" || true
+            curl -fsSL https://mise.run -o "${mise_tmp}/install.sh" && sh "${mise_tmp}/install.sh" </dev/null
             rm -rf "${mise_tmp}"
-            export PATH="${HOME}/.local/bin:${PATH}"
+            export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:${PATH}"
           fi
         fi
         if [ -d "{{.REPO_URL}}/modules/core" ]; then
@@ -83,9 +83,9 @@ tasks:
           git clone --depth 1 -c core.autocrlf=false "{{.REPO_URL}}" "${tmp_src}"
           GUARDRAILS_ORIGIN_URL="{{.REPO_URL}}" bash "${tmp_src}/modules/core/files/.guardrails/scripts/guardrails-cli.sh" init --target "." --source "${tmp_src}" --modules "{{.MODULES}}" {{.CLI_ARGS}}
         fi
-        if command -v mise >/dev/null 2>&1; then
-          mise trust -a || true
-          mise install || true
+        if [ "${GUARDRAILS_FIXTURE_MODE:-0}" != "1" ] && command -v mise >/dev/null 2>&1; then
+          mise trust -a </dev/null
+          mise install </dev/null
         fi
 
   init:
@@ -96,7 +96,12 @@ tasks:
           if [ -n "{{.CLI_ARGS}}" ]; then
             bash ./.guardrails/scripts/guardrails-cli.sh init {{.CLI_ARGS}}
           else
-            bash ./.guardrails/scripts/guardrails-cli.sh init --target "." --modules "{{.MODULES}}"
+            src_url="{{.REPO_URL}}"
+            if [ -f ./.guardrails/manifest.json ] && [ "$src_url" = "https://github.com/aptitek/metadevkit.git" ]; then
+              manifest_src="$(jq -r '.master_source // empty' ./.guardrails/manifest.json)"
+              [ -n "$manifest_src" ] && src_url="$manifest_src"
+            fi
+            bash ./.guardrails/scripts/guardrails-cli.sh init --target "." --source "$src_url" --modules "{{.MODULES}}"
           fi
         else
           {{.TASK_EXE}} bootstrap MODULES="{{.MODULES}}" REPO_URL="{{.REPO_URL}}" CLI_ARGS="{{.CLI_ARGS}}"

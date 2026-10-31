@@ -5,9 +5,9 @@
 import fs from "node:fs";
 import { defineConfig } from "vitest/config";
 
-const contentPathsFile = new URL("./.guardrails/content-md/paths.json", import.meta.url);
-const contentPaths = fs.existsSync(contentPathsFile)
-  ? JSON.parse(fs.readFileSync(contentPathsFile, "utf-8"))
+const pathsFile = new URL("./.guardrails/paths.json", import.meta.url);
+const extraPaths = fs.existsSync(pathsFile)
+  ? JSON.parse(fs.readFileSync(pathsFile, "utf-8"))
   : {};
 
 export default defineConfig({
@@ -18,12 +18,12 @@ export default defineConfig({
     include: [
       "src/**/*.{test,spec}.{ts,tsx}",
       "tests/unit/**/*.{test,spec}.{ts,tsx}",
-      ...(contentPaths.testInclude ?? []),
+      ...(extraPaths.testInclude ?? []),
     ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "html", "lcov"],
-      include: ["src/**/*.{ts,tsx}", ...(contentPaths.coverageInclude ?? [])],
+      include: ["src/**/*.{ts,tsx}", ...(extraPaths.coverageInclude ?? [])],
       thresholds: {
         lines: 95,
         branches: 90,
@@ -42,7 +42,7 @@ export default defineConfig({
         "**/types.ts",
         "**/*.types.ts",
         "**/*.config.*",
-        ...(contentPaths.coverageExclude ?? []),
+        ...(extraPaths.coverageExclude ?? []),
       ],
     },
   },

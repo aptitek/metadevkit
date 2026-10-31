@@ -29,10 +29,11 @@ def _verify_symfony_domain_and_controller_gates(
     ctrl_dir = proj / "src" / "Controller"
     ctrl_dir.mkdir(parents=True, exist_ok=True)
     ctrl_file = ctrl_dir / "OrderController.php"
-    flush_call = "$entityManager->" + "flush();"
     ctrl_file.write_text(
         "<?php\ndeclare(strict_types=1);\nnamespace App\\Controller;\n"
-        f"final class OrderController {{ public function create(object $entityManager): void {{ {flush_call} }} }}\n"
+        "final class OrderController {\n"
+        "    public function create(object $entityManager): void { $entityManager->flush(); }\n"
+        "}\n"
     )
     test_case.assertNotEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
     ctrl_file.write_text(
@@ -48,16 +49,14 @@ def _verify_django_models_and_views_gates(
 ) -> None:
     """Verify Django DJ001 model check and Services/Selectors fat-free views gate."""
     models_file = orders_dir / "models.py"
-    bad_field = "models.CharField(max_length=120, " + "null=True)"
-    models_file.write_text(f"class Order:\n    sku = {bad_field}\n")
+    models_file.write_text("class Order:\n    sku = models.CharField(max_length=120, null=True)\n")
     dj001_proc = ws.run_cmd(["task", "lint"], cwd=proj, check=False)
     test_case.assertNotEqual(dj001_proc.returncode, 0)
     test_case.assertIn("DJ001", dj001_proc.stderr + dj001_proc.stdout)
     models_file.write_text('class Order:\n    sku = ""\n\n    def __str__(self) -> str:\n        return self.sku\n')
 
     views_file = orders_dir / "views.py"
-    bad_write = "Order.objects." + "create(sku='A1')"
-    views_file.write_text(f"def create_order_view() -> None:\n    {bad_write}\n")
+    views_file.write_text("def create_order_view() -> None:\n    Order.objects.create(sku='A1')\n")
     view_proc = ws.run_cmd(["task", "lint"], cwd=proj, check=False)
     test_case.assertNotEqual(view_proc.returncode, 0)
     test_case.assertIn("DJANGO ARCHITECTURE", view_proc.stderr + view_proc.stdout)
@@ -80,8 +79,7 @@ class SymfonyAndDjangoStackTests(unittest.TestCase):
             tpl_dir = proj / "templates" / "order"
             tpl_dir.mkdir(parents=True, exist_ok=True)
             twig_file = tpl_dir / "show.html.twig"
-            raw_filter = "{{ summary|" + "raw }}"
-            twig_file.write_text(f'<main>{raw_filter}<img src="/hero.png"></main>\n')
+            twig_file.write_text('<main>{{ summary|raw }}<img src="/hero.png"></main>\n')
             self.assertNotEqual(ws.run_cmd(["task", "a11y"], cwd=proj, check=False).returncode, 0)
 
             twig_file.write_text('<main>{{ summary }}<img src="/hero.png" alt="Order hero banner"></main>\n')
@@ -99,13 +97,13 @@ class SymfonyAndDjangoStackTests(unittest.TestCase):
             _verify_django_models_and_views_gates(self, ws, orders_dir, proj)
 
             settings_file = orders_dir / "settings.py"
-            settings_file.write_text("DEBUG = " + "True\n")
+            settings_file.write_text("DEBUG = True\n")
             self.assertNotEqual(ws.run_cmd(["task", "sec"], cwd=proj, check=False).returncode, 0)
             settings_file.write_text("import os\nDEBUG = os.getenv('DJANGO_DEBUG', 'false') == 'true'\n")
 
             html_file = proj / "templates" / "orders" / "list.html"
             html_file.parent.mkdir(parents=True, exist_ok=True)
-            html_file.write_text('<section>{{ description|' + 'safe }}<img src="/box.png"></section>\n')
+            html_file.write_text('<section>{{ description|safe }}<img src="/box.png"></section>\n')
             self.assertNotEqual(ws.run_cmd(["task", "a11y"], cwd=proj, check=False).returncode, 0)
 
             html_file.write_text('<section>{{ description }}<img src="/box.png" alt="Package preview"></section>\n')

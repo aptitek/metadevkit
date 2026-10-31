@@ -1,6 +1,10 @@
 {
   "id": "fw:react-router",
+  "aliases": ["react-router"],
   "layer": "fw",
   "description": "React Router v7 framework rules: inherits fw:react, route validation, strict separation of loaders and actions",
-  "depends_on": ["core", "lang:ts", "fw:react"]
+  "depends_on": ["core", "lang:ts", "fw:react"],
+  "conflicts_with": ["fw:astro"],
+  "commit_scopes": ["routes", "loaders"],
+  "conditional_files": []
 }

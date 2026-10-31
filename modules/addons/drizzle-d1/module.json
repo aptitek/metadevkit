@@ -1,6 +1,10 @@
 {
   "id": "addon:drizzle-d1",
+  "aliases": ["drizzle-d1", "addons:drizzle-d1"],
   "layer": "addon",
+  "description": "Drizzle ORM + Cloudflare D1 SQLite Fortress: strict schema & migration config, SQL injection prevention, and migration integrity checks",
   "depends_on": ["core", "lang:ts", "addon:cloudflare"],
-  "description": "Drizzle ORM + Cloudflare D1 SQLite Fortress: strict schema & migration config, SQL injection prevention, and migration integrity checks"
+  "conflicts_with": [],
+  "commit_scopes": ["db", "schema", "migrations"],
+  "conditional_files": []
 }

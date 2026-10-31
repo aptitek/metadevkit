@@ -29,13 +29,13 @@ complexity:
     includePrivateDeclarations: false
   CyclomaticComplexMethod:
     active: true
-    threshold: 10
+    threshold: 8
     ignoreSingleWhenExpression: true
     ignoreSimpleWhenEntries: true
     ignoreNestingFunctions: false
   CognitiveComplexMethod:
     active: true
-    threshold: 10
+    threshold: 8
   LabeledExpression:
     active: true
   LargeClass:
@@ -281,7 +281,7 @@ potential-bugs:
   IteratorNotThrowingNoSuchElementException:
     active: true
   LateinitUsage:
-    active: false
+    active: true
   MapGetWithNotNullAssertionOperator:
     active: true
   MissingPackageDeclaration:
@@ -503,7 +503,7 @@ style:
   UseCheckOrError:
     active: true
   UseDataClass:
-    active: false
+    active: true
   UseEmptyCounterpart:
     active: true
   UseIfEmptyOrIfBlank:
