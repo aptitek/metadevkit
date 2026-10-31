@@ -23,6 +23,9 @@ includes:
   php:
     taskfile: ./.guardrails/taskfiles/Taskfile.php.yml
     optional: true
+  shell:
+    taskfile: ./.guardrails/taskfiles/Taskfile.shell.yml
+    optional: true
   react:
     taskfile: ./.guardrails/taskfiles/Taskfile.react.yml
     optional: true
@@ -52,6 +55,9 @@ includes:
     optional: true
   jupyter:
     taskfile: ./.guardrails/taskfiles/Taskfile.jupyter.yml
+    optional: true
+  devkit:
+    taskfile: ./.guardrails/taskfiles/Taskfile.devkit.yml
     optional: true
   cloudflare:
     taskfile: ./.guardrails/taskfiles/Taskfile.cloudflare.yml

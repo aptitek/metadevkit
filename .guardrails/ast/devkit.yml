@@ -1,0 +1,12 @@
+# =============================================================================
+# devkit.yml — Semgrep AST Rules for Meta-Devkit Self-Governance (addon:devkit)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: guardrails-devkit-no-hardcoded-tmp-path
+    pattern: /tmp/polyglot-guardrails-fixed
+    message: >
+      [GUARDRAILS AST] Hardcoded /tmp paths are forbidden in devkit scripts. Use 'mktemp -d'
+      with 'trap cleanup EXIT'.
+    languages: [bash]
+    severity: ERROR

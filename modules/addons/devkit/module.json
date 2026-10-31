@@ -1,0 +1,6 @@
+{
+  "id": "addon:devkit",
+  "layer": "addon",
+  "description": "Meta-Devkit self-governance ('Who Guards the Guardians'): validates module.json DAG, Semgrep AST rules, SKILL.md token parsimony (<=100 lines) & reference links, and runs self-test.sh",
+  "depends_on": ["core", "lang:shell"]
+}

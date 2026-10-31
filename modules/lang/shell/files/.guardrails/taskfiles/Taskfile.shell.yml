@@ -1,0 +1,19 @@
+# =============================================================================
+# Taskfile.shell.yml — Bash & Shell Module Tasks (lang:shell)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  format:
+    desc: "Format shell scripts with shfmt (when available)"
+    cmds:
+      - |
+        if command -v shfmt >/dev/null 2>&1; then
+          shfmt -i 2 -ci -w .
+        fi
+
+  lint:
+    desc: "Validate shell scripts (strict mode, bash -n syntax, security gates)"
+    cmds:
+      - bash .guardrails/scripts/validate-shell.sh .

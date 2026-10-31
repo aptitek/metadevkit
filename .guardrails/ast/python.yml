@@ -1,0 +1,48 @@
+# =============================================================================
+# python.yml — Semgrep AST Rules for Python Projects (lang:python)
+# Enforces Geranium Quality Fortress:
+#   - Zero eval() / exec()
+#   - Zero raw print() in src/ (use logging)
+#   - Zero vague variable identifiers (data, res, temp, info) in src/
+#   - Zero pip / poetry shell invocations (use uv)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: guardrails-python-no-eval-exec
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: exec(...)
+    message: >
+      [GUARDRAILS AST] Dynamic code execution via eval() or exec() is strictly forbidden.
+    languages: [python]
+    severity: ERROR
+
+  - id: guardrails-python-no-raw-print-in-src
+    pattern: print(...)
+    paths:
+      include:
+        - "src/**/*.py"
+        - "*/src/**/*.py"
+    message: >
+      [GUARDRAILS AST] Raw print() is forbidden in src/. Use the standard logging module
+      (logging.getLogger(__name__)) instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: guardrails-python-no-vague-variable-names
+    patterns:
+      - pattern-either:
+          - pattern: data = $VAL
+          - pattern: res = $VAL
+          - pattern: temp = $VAL
+          - pattern: info = $VAL
+    paths:
+      include:
+        - "src/**/*.py"
+        - "*/src/**/*.py"
+    message: >
+      [GUARDRAILS AST] Vague variable identifiers ('data', 'res', 'temp', 'info') are forbidden
+      in src/. Use explicit, domain-descriptive variable names (e.g., 'user_payload', 'voice_profile').
+    languages: [python]
+    severity: ERROR

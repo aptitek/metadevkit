@@ -20,3 +20,8 @@ description: >-
 2. **Use exact semantic assertions**:
    - Prefer `.toBe()`, `.toEqual()`, `.toStrictEqual()`, `.toContain()`, `.toHaveLength()`.
    - Weak/tautological matchers (`.toBeTruthy()`, `.toBeFalsy()`, `.toBeDefined()`, `.toMatchSnapshot()`, `.toMatchInlineSnapshot()`) are forbidden.
+3. **Type-level testing**:
+   - Use `expectTypeOf` from `vitest` to verify generic contracts and discriminated unions.
+4. **Commands**:
+   - Fast inner-loop run: `task test:quick`
+   - Full coverage run: `task test` (or `task ts:test`)

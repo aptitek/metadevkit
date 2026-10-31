@@ -25,3 +25,8 @@ Every commit message is validated by `commitlint.config.mjs` and the `lefthook.y
   - Styling & Content: `tokens`, `theme`, `recipes`, `i18n`, `a11y`, `content`, `courses`, `simulations`
   - Platform & Quality: `router`, `seo`, `db`, `auth`, `worker`, `eslint`, `deps`, `ci`, `config`, `scripts`, `tests`, `e2e`, `storybook`, `docs`, `release`, `security`, `guardrails`
 - **Subject rules**: lowercase start (`subject-case: lower-case`), imperative mood, no trailing period, at least 15 characters long.
+
+## 2. Pre-Commit Verification Checklist
+1. Stage implementation files together with their 1:1 `.test.ts(x)` and `.stories.tsx` companions.
+2. Run `task check:commit` (or `task verify`) to ensure `guard:check`, `lint`, `complexity`, and `test` pass before committing.
+3. Never use `--no-verify` to bypass `lefthook` git hooks.

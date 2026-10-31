@@ -1,0 +1,24 @@
+# =============================================================================
+# Taskfile.devkit.yml — Meta-Devkit Self-Governance Tasks (addon:devkit)
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+version: '3'
+
+tasks:
+  lint:
+    desc: "Validate module manifests, AST rules, and Agent Skill progressive disclosure gates"
+    cmds:
+      - bash .guardrails/scripts/validate-devkit.sh .
+
+  test:
+    desc: "Run end-to-end polyglot-guardrails integration self-test suite (if not already run by python:test)"
+    cmds:
+      - |
+        if [ "${GUARDRAILS_SKIP_SELFTEST:-0}" = "1" ]; then
+          exit 0
+        fi
+        if ! jq -e '.modules | index("lang:python")' .guardrails/manifest.json >/dev/null 2>&1; then
+          if [ -f ./scripts/self-test.sh ]; then
+            bash ./scripts/self-test.sh
+          fi
+        fi

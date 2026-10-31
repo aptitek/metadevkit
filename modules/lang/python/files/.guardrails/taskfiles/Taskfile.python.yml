@@ -1,6 +1,6 @@
 # =============================================================================
 # Taskfile.python.yml — Python Module Tasks (lang:python)
-# Tools: uv, ruff, mypy, radon, vulture, pytest
+# Tools: uv, ruff, mypy, radon, vulture, pytest / unittest
 # Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 # =============================================================================
 version: '3'
@@ -47,11 +47,16 @@ tasks:
         fi
 
   test:
-    desc: "Run pytest suite via uv"
+    desc: "Run Python test suite via uv pytest (or python3 unittest fallback)"
     cmds:
       - |
+        if [ "${GUARDRAILS_SKIP_SELFTEST:-0}" = "1" ]; then
+          exit 0
+        fi
         if [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1 && uv run pytest --version >/dev/null 2>&1; then
           uv run pytest
         elif command -v pytest >/dev/null 2>&1 && [ -d tests ]; then
           pytest
+        elif command -v python3 >/dev/null 2>&1 && [ -d tests ]; then
+          python3 -m unittest discover -s tests -v
         fi

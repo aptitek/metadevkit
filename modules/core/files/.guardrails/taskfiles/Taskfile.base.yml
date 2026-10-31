@@ -28,6 +28,21 @@ tasks:
     cmds:
       - bash ./.guardrails/scripts/guardrails-cli.sh feature-add {{.CLI_ARGS}} --target "."
 
+  init:
+    desc: "Initialize or convert a target project (e.g. task init -- --target /path --modules core,lang:ts)"
+    cmds:
+      - bash ./.guardrails/scripts/guardrails-cli.sh init {{.CLI_ARGS}}
+
+  self-test:
+    desc: "Run automated end-to-end integration self-test suite"
+    cmds:
+      - |
+        if [ -f ./scripts/self-test.sh ]; then
+          bash ./scripts/self-test.sh
+        else
+          {{.TASK_EXE}} verify
+        fi
+
   setup:
     desc: "Install toolchain via mise, git hooks via lefthook, and module dependencies"
     cmds:
@@ -86,6 +101,7 @@ tasks:
             --exclude-dir=coverage \
             --exclude-dir=.guardrails \
             --exclude-dir=.agents \
+            --exclude-dir=rules \
             --exclude="*.lock" \
             --exclude="*.md" \
             '(eslint-disable|@ts-ignore|@ts-expect-error|@ts-nocheck|#\s*noqa|#\s*type:\s*ignore|@SuppressWarnings|@(file:)?Suppress\s*\(|@phpstan-ignore|nosemgrep)' . ; then

@@ -8,7 +8,14 @@ description: >-
 
 # Skill: Library Barrel & Package Exports (`lib-exports`)
 
-## Core Rules
-- Wildcard `export * from` is forbidden in `src/index.ts`; use explicit named exports.
-- Import `"./index.css"` at the top of `src/index.ts` when `src/index.css` is present.
-- Ensure `package.json` `"exports"` defines a valid `"."` entry.
+Governed by `.guardrails/scripts/lint-exports.mjs` and `.guardrails/taskfiles/Taskfile.lib-exports.yml`.
+
+## 1. Contract for `src/index.ts`
+1. **Zero Wildcard Re-Exports**:
+   - `export * from "..."` is strictly forbidden in `src/index.ts` (and across all `src/` modules). Explicitly list every exported symbol and type (`export { Button, type ButtonProps } from "./components/atoms/Button"`).
+2. **Stylesheet Entrypoint**:
+   - When `src/index.css` exists, `src/index.ts` must import `"./index.css"` at the top of the barrel file.
+3. **ESM `package.json` Exports**:
+   - When `package.json` defines an `"exports"` map, it must include a valid root `"."` entry with `"types"` and `"import"` targets.
+4. **Verification**:
+   - Run `task lib-exports:lint` (or `task verify`).

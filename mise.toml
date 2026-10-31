@@ -1,7 +1,10 @@
 # =============================================================================
-# polyglot-guardrails — Root Toolchain Configuration (mise)
+# mise.toml — Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# Active modules: core lang:shell lang:python addon:devkit
 # =============================================================================
 [tools]
+
+# --- Module: core ---
 go-task = "latest"
 lefthook = "latest"
 "npm:jscpd" = "latest"
@@ -9,6 +12,12 @@ lefthook = "latest"
 trivy = "latest"
 "pipx:semgrep" = "latest"
 "pipx:copier" = "latest"
-node = "lts"
-pnpm = "latest"
-jq = "latest"
+
+# --- lang:shell toolchain ---
+shellcheck = "latest"
+shfmt = "latest"
+
+# --- Module: lang:python ---
+python = "3.12"
+uv = "latest"
+ruff = "latest"

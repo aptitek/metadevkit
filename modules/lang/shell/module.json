@@ -1,0 +1,6 @@
+{
+  "id": "lang:shell",
+  "layer": "lang",
+  "description": "Defensive Bash & POSIX Shell engineering stack (bash -n, strict set -euo pipefail, shellcheck, shfmt, and zero eval/curl-pipe-sh AST gates)",
+  "depends_on": ["core"]
+}

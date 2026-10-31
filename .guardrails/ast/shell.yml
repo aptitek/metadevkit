@@ -1,0 +1,23 @@
+# =============================================================================
+# shell.yml — Semgrep AST Rules for Bash & Shell Scripts (lang:shell)
+# Enforces:
+#   - Zero eval execution in shell scripts
+#   - Zero curl/wget piped directly into sh/bash
+#   - Zero privilege escalation (sudo) inside repository scripts
+# Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
+# =============================================================================
+rules:
+  - id: guardrails-shell-no-eval
+    pattern: eval ...
+    message: >
+      [GUARDRAILS AST] Dynamic shell execution via 'eval' is strictly forbidden.
+      Use arrays and explicit command invocation instead.
+    languages: [bash]
+    severity: ERROR
+
+  - id: guardrails-shell-no-sudo
+    pattern: sudo ...
+    message: >
+      [GUARDRAILS AST] Calling 'sudo' inside repository scripts is forbidden.
+    languages: [bash]
+    severity: ERROR

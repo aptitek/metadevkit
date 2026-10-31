@@ -1,0 +1,26 @@
+[project]
+name = "polyglot-guardrails"
+version = "1.0.0"
+description = "Single Source of Truth meta-framework for polyglot quality gates, AST rules, and AI vibe-coding guardrails"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.0",
+    "pytest-xdist>=3.6.1",
+    "radon>=6.0.1",
+    "ruff>=0.11.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+show_error_codes = true

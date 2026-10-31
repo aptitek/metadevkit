@@ -28,3 +28,9 @@ Apply these rules on every code change and run the self-check before delivery.
 1. **Single Responsibility (SRP)**: One actor and one reason to change per module.
 2. **Knowledge Deduplication (DRY)**: `.jscpd.json` enforces `0%` code duplication across the repository, and `design-system.mjs` enforces commutative recipe deduplication.
 3. **Zero Speculative Code (YAGNI)**: Never add unused parameters, feature flags, or unreferenced exports (`knip` fails on any unused file, export, or dependency).
+
+## 3. AI-Specific Failure-Mode Checks
+1. **Never swallow errors** or return fake/hardcoded success fixtures in production code.
+2. **Guard the boundary; trust the internal contract**: Validate untrusted inputs at I/O boundaries (e.g. with Zod `safeParse`), and rely on strict TypeScript types internally.
+3. **Never weaken or skip tests**: Fix the implementation, never the quality gate.
+4. **Verify with `task check:quick` and `task verify`** before reporting completion.

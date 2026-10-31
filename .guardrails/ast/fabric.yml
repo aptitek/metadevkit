@@ -1,0 +1,29 @@
+# =============================================================================
+# polyglot-guardrails — Fabric MC AST & Side Boundary Rules (fw:fabric)
+# =============================================================================
+rules:
+  - id: fabric-no-client-api-on-server-or-common
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Fabric Side Separation] Server/common packages must NEVER import
+      'net.fabricmc.api.ClientModInitializer' or 'net.fabricmc.fabric.api.client.*'.
+    paths:
+      include:
+        - "**/server/**/*.java"
+        - "**/server/**/*.kt"
+        - "**/common/**/*.java"
+        - "**/common/**/*.kt"
+    pattern-regex: '^\s*import\s+(net\.fabricmc\.api\.ClientModInitializer|net\.fabricmc\.fabric\.api\.client\.)'
+
+  - id: fabric-no-dedicated-server-api-on-client
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      [Fabric Side Separation] Client packages must NEVER import
+      'net.fabricmc.api.DedicatedServerModInitializer'.
+    paths:
+      include:
+        - "**/client/**/*.java"
+        - "**/client/**/*.kt"
+    pattern-regex: '^\s*import\s+net\.fabricmc\.api\.DedicatedServerModInitializer\b'

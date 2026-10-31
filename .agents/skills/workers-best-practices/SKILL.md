@@ -8,8 +8,22 @@ description: >-
 
 # Skill: Cloudflare Workers & Edge Security (`workers-best-practices`)
 
-## Core Rules
-- **Parameterized D1 SQL Only**: Never interpolate strings inside `env.DB.prepare(\`...\`)`; always use `?` placeholders and `.bind(...)`.
-- **No Module-Level Mutable Request State**: Pass request state explicitly.
-- **Promise Lifetime**: Always `await` or pass background promises to `ctx.waitUntil(promise)`.
-- **Web Crypto**: Use `crypto.randomUUID()` / `crypto.getRandomValues()`, never `Math.random()`.
+Governed by `.guardrails/ast/cloudflare.yml` and `.guardrails/taskfiles/Taskfile.cloudflare.yml`.
+
+## 1. Mandatory AST & Security Rules (`.guardrails/ast/cloudflare.yml`)
+1. **Parameterized D1 SQL Queries Only**:
+   - String interpolation inside `env.DB.prepare(\`SELECT ... \${val}\`)` is strictly forbidden.
+   - Always use positional `?` placeholders and `.bind(...)`:
+     ```typescript
+     const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ?")
+       .bind(userId)
+       .first();
+     ```
+2. **No Module-Level Mutable Request State**:
+   - Workers reuse isolates across concurrent requests; never store per-request state in module-scoped variables.
+3. **Promise Lifetime & Streaming**:
+   - Always `await` async operations or attach background work to `ctx.waitUntil(promise)` (never destructure `const { waitUntil } = ctx`).
+   - Stream large payloads instead of buffering unbounded `await response.text()`.
+4. **Web Crypto Security**:
+   - Never use `Math.random()` for tokens or IDs; use `crypto.randomUUID()` or `crypto.getRandomValues()`.
+   - Never hardcode secrets in code or `wrangler.toml`.

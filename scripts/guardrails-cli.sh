@@ -38,6 +38,7 @@ normalize_module_id() {
     java|lang:java) echo "lang:java" ;;
     kotlin|lang:kotlin) echo "lang:kotlin" ;;
     php|lang:php) echo "lang:php" ;;
+    shell|bash|lang:shell|lang:bash) echo "lang:shell" ;;
     react|fw:react) echo "fw:react" ;;
     react-router|fw:react-router) echo "fw:react-router" ;;
     astro|fw:astro) echo "fw:astro" ;;
@@ -48,6 +49,7 @@ normalize_module_id() {
     nicegui|fw:nicegui) echo "fw:nicegui" ;;
     langchain|langgraph|fw:langchain|addon:langchain|addons:langchain) echo "fw:langchain" ;;
     jupyter|jupiter|fw:jupyter|fw:jupiter|addon:jupyter|addons:jupyter) echo "fw:jupyter" ;;
+    devkit|meta-devkit|guardrails|addon:devkit|addons:devkit|fw:devkit) echo "addon:devkit" ;;
     cloudflare|addon:cloudflare|addons:cloudflare) echo "addon:cloudflare" ;;
     design-system|addon:design-system|addons:design-system) echo "addon:design-system" ;;
     testing-fortress|addon:testing-fortress|addons:testing-fortress) echo "addon:testing-fortress" ;;
@@ -57,7 +59,7 @@ normalize_module_id() {
     lib-exports|addon:lib-exports|addons:lib-exports) echo "addon:lib-exports" ;;
     *)
       echo -e "${RED}[GUARDRAILS ERROR] Unknown module identifier: '${raw}'${NC}" >&2
-      echo "Supported modules: core, lang:ts, lang:python, lang:java, lang:kotlin, lang:php, fw:react, fw:react-router, fw:astro, fw:minecraft, fw:quilt, fw:fabric, fw:flet, fw:nicegui, fw:langchain, fw:jupyter, addon:cloudflare, addon:design-system, addon:testing-fortress, addon:storybook, addon:content-md, addon:drizzle-d1, addon:lib-exports" >&2
+      echo "Supported modules: core, lang:ts, lang:python, lang:java, lang:kotlin, lang:php, lang:shell, fw:react, fw:react-router, fw:astro, fw:minecraft, fw:quilt, fw:fabric, fw:flet, fw:nicegui, fw:langchain, fw:jupyter, addon:devkit, addon:cloudflare, addon:design-system, addon:testing-fortress, addon:storybook, addon:content-md, addon:drizzle-d1, addon:lib-exports" >&2
       return 1
       ;;
   esac
@@ -284,6 +286,15 @@ apply_modules() {
     fi
   done
 
+  # When addon:devkit is active on a meta-devkit repository (containing modules/),
+  # synchronize the entire skill catalog & AST rule library for 100% parity
+  if [[ -d "${target_dir}/modules" ]] && printf '%s\n' "${active_modules[@]}" | grep -qx "addon:devkit"; then
+    while IFS= read -r -d '' mod_skills_dir; do
+      cp -R "${mod_skills_dir}/." "${target_dir}/.agents/skills/"
+    done < <(find "${master_dir}/modules" -type d -path "*/files/.agents/skills" -print0)
+    cp "${master_dir}/rules/ast/"*.yml "${target_dir}/.guardrails/ast/"
+  fi
+
   # Synchronize internal scripts
   cp "${master_dir}/scripts/verify-lock.sh" "${target_dir}/.guardrails/scripts/verify-lock.sh"
   cp "${master_dir}/scripts/guardrails-cli.sh" "${target_dir}/.guardrails/scripts/guardrails-cli.sh"
@@ -294,10 +305,14 @@ apply_modules() {
   commit_sha="$(get_source_commit "$master_dir")"
   local modules_json
   modules_json="$(printf '%s\n' "${active_modules[@]}" | jq -R . | jq -s .)"
+  local manifest_source="$source_spec"
+  if [[ "${target_dir}" == "${master_dir}" ]]; then
+    manifest_source="."
+  fi
 
   jq -n \
     --arg version "1.0.0" \
-    --arg source "$source_spec" \
+    --arg source "$manifest_source" \
     --arg commit "$commit_sha" \
     --argjson modules "$modules_json" \
     '{
