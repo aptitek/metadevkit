@@ -12,6 +12,9 @@
 //     molecules -> organisms/simulations -> templates -> pages)
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
+import i18nextPlugin from "eslint-plugin-i18next";
 import a11yConfig from "./ui-guardrails.mjs";
 
 export const atomicPurityAndI18nSyntaxRules = [
@@ -155,6 +158,11 @@ export default [
     name: "guardrails/fw:react/core",
     files: ["src/**/*.{jsx,tsx}", "simulations/**/*.{jsx,tsx}"],
     ignores: ["**/*.stories.{jsx,tsx}", "**/*.test.{jsx,tsx}", "**/*.spec.{jsx,tsx}"],
+    plugins: {
+      react: reactPlugin,
+      "react-hooks": reactHooksPlugin,
+      i18next: i18nextPlugin,
+    },
     rules: {
       "max-lines": ["error", { max: 150, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["error", { max: 28, skipBlankLines: true, skipComments: true }],

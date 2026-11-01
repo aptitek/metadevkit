@@ -32,17 +32,24 @@ class RepoTestWorkspace:
         if not symlink_path.exists():
             symlink_path.symlink_to(Path(task_bin))
         self._env["PATH"] = f"{self.bin_dir}:{self._env.get('PATH', '')}"
+        self._env.pop("UV_PROJECT_ENVIRONMENT", None)
         if not shutil.which("uv", path=self._env["PATH"]):
             tmp_root = Path(tempfile.gettempdir())
             mise_shims = tmp_root / "mise-data" / "shims"
             self._env["MISE_DATA_DIR"] = str(tmp_root / "mise-data")
             self._env["PATH"] = f"{mise_shims}:{self._env['PATH']}"
             self._env.setdefault("UV_CACHE_DIR", str(tmp_root / "uv-cache"))
-        self._env["UV_PYTHON"] = sys.executable
-        self._env["UV_LINK_MODE"] = "copy"
-        self._env["PYTHONDONTWRITEBYTECODE"] = "1"
-        self._env["GUARDRAILS_SKIP_SELFTEST"] = "1"
-        self._env["GUARDRAILS_FIXTURE_MODE"] = "1" if fixture_mode else "0"
+        if self._env.get("UV_CACHE_DIR") == ".cache/uv":
+            self._env["UV_CACHE_DIR"] = str((REPO_ROOT / ".cache" / "uv").resolve())
+        self._env.update(
+            {
+                "UV_PYTHON": sys.executable,
+                "UV_LINK_MODE": "copy",
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "GUARDRAILS_SKIP_SELFTEST": "1",
+                "GUARDRAILS_FIXTURE_MODE": "1" if fixture_mode else "0",
+            }
+        )
 
     @property
     def root(self) -> Path:

@@ -2,10 +2,21 @@
 // .guardrails/eslint/astro.mjs — Astro Island Architecture & Accessibility Rules
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+import astroPlugin from "eslint-plugin-astro";
+import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
+
 export default [
+  {
+    ignores: ["**/.astro/**"],
+  },
+  ...(astroPlugin.configs?.["flat/recommended"] ?? []),
   {
     name: "guardrails/fw:astro",
     files: ["**/*.astro"],
+    plugins: {
+      astro: astroPlugin,
+      "jsx-a11y": jsxA11yPlugin,
+    },
     rules: {
       "astro/no-conflict-set-directives": "error",
       "astro/no-unused-define-vars-in-style": "error",
@@ -14,7 +25,7 @@ export default [
       "astro/no-deprecated-astro-resolve": "error",
       "astro/valid-compile": "error",
       "jsx-a11y/alt-text": "error",
-      "jsx-a11y/anchor-is-valid": "error"
-    }
-  }
+      "jsx-a11y/anchor-is-valid": "error",
+    },
+  },
 ];

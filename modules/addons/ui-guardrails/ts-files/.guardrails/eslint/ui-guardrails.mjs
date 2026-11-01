@@ -4,6 +4,8 @@
 // to native HTML semantics for strict jsx-a11y verification.
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
+
 export const a11yComponentMapping = {
   Box: "div",
   Flex: "div",
@@ -92,6 +94,9 @@ export default [
   {
     name: "guardrails/fw:react/a11y",
     files: ["src/**/*.{jsx,tsx}", "simulations/**/*.{jsx,tsx}"],
+    plugins: {
+      "jsx-a11y": jsxA11yPlugin,
+    },
     settings: {
       "jsx-a11y": {
         components: a11yComponentMapping,

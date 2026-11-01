@@ -32,6 +32,26 @@ def _write_compliant_web_fixtures(proj: Path) -> None:
     )
 
 
+def _seed_eslint_plugin_stubs(proj: Path) -> None:
+    """Create minimal ESM plugin stubs in node_modules so node can import eslint.config.mjs."""
+    nm = proj / "node_modules"
+    stubs = {
+        "typescript-eslint": "export default { parser: { parse() {} }, plugin: { rules: {} } };\n",
+        "eslint-plugin-react": "export default { rules: {} };\n",
+        "eslint-plugin-react-hooks": "export default { rules: {} };\n",
+        "eslint-plugin-i18next": "export default { rules: {} };\n",
+        "eslint-plugin-jsx-a11y": "export default { rules: {} };\n",
+    }
+    for pkg, code in stubs.items():
+        pkg_dir = nm / pkg
+        pkg_dir.mkdir(parents=True, exist_ok=True)
+        (pkg_dir / "package.json").write_text(
+            f'{{"name": "{pkg}", "type": "module", "main": "index.js"}}\n',
+            encoding="utf-8",
+        )
+        (pkg_dir / "index.js").write_text(code, encoding="utf-8")
+
+
 class WebStackTests(unittest.TestCase):
     """Verify Web modules, dynamic feature:add, AST anti-bypass, and full verify."""
 
@@ -88,6 +108,32 @@ class WebStackTests(unittest.TestCase):
 
             _write_compliant_web_fixtures(proj)
             ws.run_cmd(["task", "verify"], cwd=proj)
+
+    def test_eslint_flat_config_module_colocation(self) -> None:
+        """Verify each ESLint fragment registers its own plugins/parser and composes cleanly."""
+        with RepoTestWorkspace() as ws:
+            proj = ws.project_dir("eslint-colocation")
+            ws.init_project(
+                proj,
+                "core,lang:ts,fw:react,addon:design-system,addon:storybook,addon:testing-fortress",
+            )
+            eslint_root_text = (proj / "eslint.config.mjs").read_text(encoding="utf-8")
+            self.assertNotIn("eslint-plugin-react", eslint_root_text)
+            self.assertNotIn("eslint-plugin-astro", eslint_root_text)
+
+            _seed_eslint_plugin_stubs(proj)
+            check_js = (
+                "import cfg from './eslint.config.mjs';"
+                "const named = cfg.filter((c) => c.name);"
+                "const names = named.map((c) => c.name);"
+                "if (new Set(names).size !== names.length) process.exit(2);"
+                "const byName = Object.fromEntries(named.map((c) => [c.name, c]));"
+                "if (!byName['guardrails/lang:ts/base']?.languageOptions?.parser) process.exit(3);"
+                "if (!byName['guardrails/lang:ts/base']?.plugins?.['@typescript-eslint']) process.exit(4);"
+                "if (!byName['guardrails/fw:react/core']?.plugins?.['react-hooks']) process.exit(5);"
+                "if (!byName['guardrails/fw:react/a11y']?.plugins?.['jsx-a11y']) process.exit(6);"
+            )
+            ws.run_cmd(["node", "--input-type=module", "-e", check_js], cwd=proj)
 
 
 if __name__ == "__main__":

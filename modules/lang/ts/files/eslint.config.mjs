@@ -39,4 +39,12 @@ const loadedRules = await Promise.all(
   }),
 );
 
-export default [baseIgnores, ...loadedRules.flat()];
+const seenNames = new Set();
+const deduplicatedRules = loadedRules.flat().filter((cfg) => {
+  if (!cfg?.name) return true;
+  if (seenNames.has(cfg.name)) return false;
+  seenNames.add(cfg.name);
+  return true;
+});
+
+export default [baseIgnores, ...deduplicatedRules];

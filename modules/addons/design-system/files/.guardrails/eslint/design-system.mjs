@@ -448,6 +448,9 @@ export const pandaRecipesPlugin = {
 
 export default [
   {
+    ignores: ["**/styled-system/**"],
+  },
+  {
     name: "guardrails/addon:design-system",
     files: ["src/**/*.{ts,tsx}", "simulations/**/*.{ts,tsx}"],
     plugins: {

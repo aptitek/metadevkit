@@ -7,6 +7,8 @@
 //   - Strict complexity (<= 3 in src, <= 8 in scripts/tests) & function length (<= 28)
 // Managed by polyglot-guardrails (DO NOT EDIT MANUALLY)
 // =============================================================================
+import tseslint from "typescript-eslint";
+
 export const restrictedImportsRule = [
   "error",
   {
@@ -81,6 +83,12 @@ export default [
   {
     name: "guardrails/lang:ts/base",
     files: ["**/*.{ts,tsx,mts,cts}"],
+    languageOptions: {
+      parser: tseslint.parser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
     rules: {
       "no-console": ["error", { allow: ["warn", "error"] }],
       "no-debugger": "error",

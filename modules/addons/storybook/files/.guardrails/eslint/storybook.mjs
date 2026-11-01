@@ -66,6 +66,9 @@ const storybookCsf3Plugin = {
 export function createStorybookConfig() {
   return [
     {
+      ignores: ["**/.storybook/**", "**/storybook-static/**"],
+    },
+    {
       name: "guardrails/addon:storybook",
       files: ["**/*.stories.{ts,tsx}"],
       plugins: {
