@@ -1,0 +1,4 @@
+# --- Module: addon:docker ---
+hadolint = "2.14"
+dockle = "0.4"
+dive = "0.13"

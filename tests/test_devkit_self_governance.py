@@ -107,7 +107,10 @@ class DevkitSelfGovernanceTests(unittest.TestCase):
             dockerfile.write_text("FROM alpine:latest\n", encoding="utf-8")
             self.assertNotEqual(ws.run_cmd(["task", "lint"], cwd=proj, check=False).returncode, 0)
 
-            dockerfile.write_text("FROM alpine:3.21\nUSER appuser\n", encoding="utf-8")
+            dockerfile.write_text(
+                'FROM alpine:3.21\nUSER appuser\nHEALTHCHECK --interval=30s CMD ["true"]\n',
+                encoding="utf-8",
+            )
             ws.run_cmd(["task", "verify"], cwd=proj)
 
     def test_standalone_taskfile_and_bootstrap_script(self) -> None:
